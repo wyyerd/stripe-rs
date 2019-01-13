@@ -1,3 +1,4 @@
+use ids::CardId;
 use params::{Identifiable, Metadata};
 use resources::Currency;
 use serde::ser::SerializeStruct;
@@ -33,7 +34,7 @@ impl<'a> ::serde::Serialize for CardParams<'a> {
 /// For more details see [https://stripe.com/docs/api#card_object](https://stripe.com/docs/api#card_object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Card {
-    pub id: String,
+    pub id: CardId,
     pub account: Option<String>,
     pub address_city: Option<String>,
     pub address_country: Option<String>,
@@ -149,6 +150,6 @@ pub enum TokenizationMethod {
 
 impl Identifiable for Card {
     fn id(&self) -> &str {
-        &self.id
+        self.id.as_str()
     }
 }

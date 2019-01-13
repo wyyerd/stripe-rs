@@ -1,3 +1,4 @@
+use ids::BankAccountId;
 use params::{Identifiable, Metadata};
 use resources::Currency;
 use serde::ser::SerializeStruct;
@@ -44,7 +45,7 @@ impl<'a> ::serde::Serialize for BankAccountParams<'a> {
 /// For more details see https://stripe.com/docs/api#customer_bank_account_object.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BankAccount {
-    pub id: String,
+    pub id: BankAccountId,
     pub account_holder_name: String,
     pub account_holder_type: String, // (individual or company)
     pub bank_name: String,
@@ -60,7 +61,7 @@ pub struct BankAccount {
 
 impl Identifiable for BankAccount {
     fn id(&self) -> &str {
-        &self.id
+        self.id.as_str()
     }
 }
 

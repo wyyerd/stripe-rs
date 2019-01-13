@@ -8,6 +8,11 @@ macro_rules! id {
             pub fn prefix() -> &'static str {
                 $prefix
             }
+
+            #[inline]
+            pub fn as_str(&self) -> &str {
+                self.0.as_str()
+            }
         }
 
         impl ::std::fmt::Display for $newtype_name {
@@ -54,6 +59,14 @@ macro_rules! id {
         pub enum $enum_name {$(
             $variant_name($($variant_type)*),
         )*}
+
+        impl $enum_name {
+            fn as_str(&self) -> &str {
+                match *self {$(
+                    $enum_name::$variant_name(ref id) => id.as_str(),
+                )*}
+            }
+        }
 
         impl ::std::fmt::Display for $enum_name {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
