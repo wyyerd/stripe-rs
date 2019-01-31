@@ -240,7 +240,9 @@ impl Webhook {
         let mut mac =
             Hmac::<Sha256>::new_varkey(secret.as_bytes()).map_err(|_| WebhookError::BadKey)?;
         mac.input(signed_payload.as_bytes());
-        if event.livemode && !mac.result().is_equal(sign.as_bytes()) {
+        let mac_result = mac.result();
+        let hex = Self::to_hex(mac_result.code().as_slice());
+        if hex != sign {
             return Err(WebhookError::BadSignature);
         }
 
@@ -251,6 +253,18 @@ impl Webhook {
         }
 
         Ok(event)
+    }
+
+    pub const CHARS: &'static [u8] = b"0123456789abcdef";
+
+    pub fn to_hex(bytes: &[u8]) -> String {
+        let mut v = Vec::with_capacity(bytes.len() * 2);
+        for &byte in bytes {
+            v.push(Self::CHARS[(byte >> 4) as usize]);
+            v.push(Self::CHARS[(byte & 0xf) as usize]);
+        }
+
+        unsafe { String::from_utf8_unchecked(v) }
     }
 }
 
