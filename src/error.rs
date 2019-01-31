@@ -288,7 +288,6 @@ pub enum WebhookError {
     BadParse(serde_json::Error),
     /// Additional signature with a fake v0 scheme, for test-mode events is missing.
     MissingTestmodeSignature,
-
 }
 
 impl std::fmt::Display for WebhookError {
