@@ -215,11 +215,18 @@ pub enum EventObject {
 }
 
 #[cfg(feature = "webhooks")]
-pub struct Webhook {}
+pub struct Webhook {
+    current_timestamp: i64,
+}
 
 #[cfg(feature = "webhooks")]
 impl Webhook {
+    pub fn new() -> Self {
+        Self { current_timestamp: Utc::now().timestamp() }
+    }
+
     pub fn construct_event(
+        self,
         payload: String,
         sig: String,
         secret: String,
@@ -247,8 +254,7 @@ impl Webhook {
         }
 
         // Get current timestamp to compare to signature timestamp
-        let current = Utc::now().timestamp();
-        if current - signature.t > 300 {
+        if (self.current_timestamp - signature.t).abs() > 300 {
             return Err(WebhookError::BadTimestamp(signature.t));
         }
 
@@ -279,13 +285,23 @@ struct Signature<'r> {
 #[cfg(feature = "webhooks")]
 impl<'r> Signature<'r> {
     fn parse(raw: &'r str) -> Result<Signature<'r>, WebhookError> {
-        let mut headers = raw.split(',');
-        let timestamp_header = headers.next().ok_or(WebhookError::BadSignature)?;
-        let v1_header = headers.next().ok_or(WebhookError::BadSignature)?;
-        let v0_header = headers.next();
-        let t = timestamp_header.split('=').skip(1).next().ok_or(WebhookError::BadSignature)?;
-        let v1 = v1_header.split('=').skip(1).next().ok_or(WebhookError::BadSignature)?;
-        let v0 = v0_header.and_then(|header| header.split('=').skip(1).next());
+        use std::collections::HashMap;
+        let headers: HashMap<&str, &str> = raw
+            .split(',')
+            .map(|header| {
+                let mut key_and_value = header.split('=');
+                let key = key_and_value.next();
+                let value = key_and_value.next();
+                (key, value)
+            })
+            .filter_map(|(key, value)| match (key, value) {
+                (Some(key), Some(value)) => Some((key, value)),
+                _ => None,
+            })
+            .collect();
+        let t = headers.get("t").ok_or(WebhookError::BadSignature)?;
+        let v1 = headers.get("v1").ok_or(WebhookError::BadSignature)?;
+        let v0 = headers.get("v0").map(|r| *r);
         Ok(Signature { t: t.parse::<i64>().map_err(WebhookError::BadHeader)?, v1, v0 })
     }
 }
