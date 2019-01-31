@@ -176,6 +176,7 @@ pub struct Event {
     #[serde(rename = "type")]
     pub event_type: EventType,
     pub data: EventData,
+    pub livemode: bool,
     // ...
 }
 
@@ -223,31 +224,78 @@ impl Webhook {
         sig: String,
         secret: String,
     ) -> Result<Event, WebhookError> {
-        let headers: Vec<String> = sig.split(',').map(|s| s.trim().to_string()).collect();
-
-        // Prepare the signed payload
-        let timestamp: Vec<String> = headers[0].split('=').map(|s| s.to_string()).collect();
-        let signed_payload = format!("{}{}{}", timestamp[1], ".", payload);
-
         // Get Stripe signature from header
-        let signature: Vec<String> = headers[1].split('=').map(|s| s.to_string()).collect();
+        let signature = Signature::parse(&sig)?;
+        let signed_payload = format!("{}{}{}", signature.t, ".", payload);
 
+        let event: Event = serde_json::from_str(&payload).map_err(WebhookError::BadParse)?;
+
+        let sign = if event.livemode {
+            signature.v1
+        } else {
+            signature.v0.ok_or(WebhookError::MissingTestmodeSignature)?
+        };
         // Compute HMAC with the SHA256 hash function, using endpoing secret as key
         // and signed_payload string as the message.
         let mut mac =
             Hmac::<Sha256>::new_varkey(secret.as_bytes()).map_err(|_| WebhookError::BadKey)?;
         mac.input(signed_payload.as_bytes());
-        if !mac.result().is_equal(signature[1].as_bytes()) {
+        if !mac.result().is_equal(sign.as_bytes()) {
             return Err(WebhookError::BadSignature);
         }
 
         // Get current timestamp to compare to signature timestamp
         let current = Utc::now().timestamp();
-        let num_timestamp = timestamp[1].parse::<i64>().map_err(WebhookError::BadHeader)?;
-        if current - num_timestamp > 300 {
-            return Err(WebhookError::BadTimestamp(num_timestamp));
+        if current - signature.t > 300 {
+            return Err(WebhookError::BadTimestamp(signature.t));
         }
 
-        serde_json::from_str(&payload).map_err(WebhookError::BadParse)
+        Ok(event)
+    }
+}
+
+#[cfg(feature = "webhooks")]
+#[derive(Debug)]
+struct Signature<'r> {
+    t: i64,
+    v1: &'r str,
+    v0: Option<&'r str>,
+}
+
+#[cfg(feature = "webhooks")]
+impl<'r> Signature<'r> {
+    fn parse(raw: &'r str) -> Result<Signature<'r>, WebhookError> {
+        let mut headers = raw.split(',');
+        let timestamp_header = headers.next().ok_or(WebhookError::BadSignature)?;
+        let v1_header = headers.next().ok_or(WebhookError::BadSignature)?;
+        let v0_header = headers.next();
+        let t = timestamp_header.split('=').skip(1).next().ok_or(WebhookError::BadSignature)?;
+        let v1 = v1_header.split('=').skip(1).next().ok_or(WebhookError::BadSignature)?;
+        let v0 = v0_header.and_then(|header| header.split('=').skip(1).next());
+        Ok(Signature {
+            t: t.parse::<i64>().map_err(WebhookError::BadHeader)?,
+            v1,
+            v0,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "webhooks")]
+    #[test]
+    fn test_signature_parse() {
+        use super::Signature;
+
+        let raw_signature = "t=1492774577,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd";
+        let signature = Signature::parse(raw_signature).unwrap();
+        assert_eq!(signature.t, 1492774577);
+        assert_eq!(signature.v1, "5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd");
+
+        let raw_signature_with_test_mode = "t=1492774577,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd,v0=6ffbb59b2300aae63f272406069a9788598b792a944a07aba816edb039989a39";
+        let signature = Signature::parse(raw_signature_with_test_mode).unwrap();
+        assert_eq!(signature.t, 1492774577);
+        assert_eq!(signature.v1, "5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd");
+        assert_eq!(signature.v0, Some("6ffbb59b2300aae63f272406069a9788598b792a944a07aba816edb039989a39"));
     }
 }

@@ -286,6 +286,9 @@ pub enum WebhookError {
     BadTimestamp(i64),
     /// An error deserializing an event received from stripe.
     BadParse(serde_json::Error),
+    /// Additional signature with a fake v0 scheme, for test-mode events is missing.
+    MissingTestmodeSignature,
+
 }
 
 impl std::fmt::Display for WebhookError {
@@ -297,6 +300,7 @@ impl std::fmt::Display for WebhookError {
             WebhookError::BadSignature => Ok(()),
             WebhookError::BadTimestamp(ref err) => write!(f, ": {}", err),
             WebhookError::BadParse(ref err) => write!(f, ": {}", err),
+            WebhookError::MissingTestmodeSignature => Ok(()),
         }
     }
 }
@@ -309,6 +313,7 @@ impl std::error::Error for WebhookError {
             WebhookError::BadSignature => "error comparing signatures",
             WebhookError::BadTimestamp(_) => "error comparing timestamps - over tolerance",
             WebhookError::BadParse(_) => "error parsing event object",
+            WebhookError::MissingTestmodeSignature => "error parsing fake v0 scheme",
         }
     }
 
@@ -319,6 +324,7 @@ impl std::error::Error for WebhookError {
             WebhookError::BadSignature => None,
             WebhookError::BadTimestamp(_) => None,
             WebhookError::BadParse(ref err) => Some(err),
+            WebhookError::MissingTestmodeSignature => None,
         }
     }
 }
