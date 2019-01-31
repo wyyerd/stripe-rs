@@ -240,7 +240,7 @@ impl Webhook {
         let mut mac =
             Hmac::<Sha256>::new_varkey(secret.as_bytes()).map_err(|_| WebhookError::BadKey)?;
         mac.input(signed_payload.as_bytes());
-        if !mac.result().is_equal(sign.as_bytes()) {
+        if event.livemode && !mac.result().is_equal(sign.as_bytes()) {
             return Err(WebhookError::BadSignature);
         }
 
