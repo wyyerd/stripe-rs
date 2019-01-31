@@ -235,13 +235,6 @@ impl Webhook {
         let signature = Signature::parse(&sig)?;
         let signed_payload = format!("{}{}{}", signature.t, ".", payload);
 
-        let event: Event = serde_json::from_str(&payload).map_err(WebhookError::BadParse)?;
-
-        let sign = if event.livemode {
-            signature.v1
-        } else {
-            signature.v0.ok_or(WebhookError::MissingTestmodeSignature)?
-        };
         // Compute HMAC with the SHA256 hash function, using endpoing secret as key
         // and signed_payload string as the message.
         let mut mac =
@@ -249,7 +242,7 @@ impl Webhook {
         mac.input(signed_payload.as_bytes());
         let mac_result = mac.result();
         let hex = Self::to_hex(mac_result.code().as_slice());
-        if hex != sign {
+        if hex != signature.v1 {
             return Err(WebhookError::BadSignature);
         }
 
@@ -258,7 +251,7 @@ impl Webhook {
             return Err(WebhookError::BadTimestamp(signature.t));
         }
 
-        Ok(event)
+        serde_json::from_str(&payload).map_err(WebhookError::BadParse)
     }
 
     pub const CHARS: &'static [u8] = b"0123456789abcdef";
