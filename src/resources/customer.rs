@@ -183,6 +183,13 @@ impl Customer {
     pub fn delete(client: &Client, id: &CustomerId) -> Response<Deleted<CustomerId>> {
         client.delete(&format!("/customers/{}", id))
     }
+
+    /// Removes a discount attached to a customer.
+    ///
+    /// You need only supply the unique customer identifier that was returned upon customer creation.
+    pub fn delete_discount(client: &Client, id: &CustomerId) -> Response<Deleted<()>> {
+        client.delete(&format!("/customers/{}/discount", id))
+    }
 }
 
 impl Object for Customer {
