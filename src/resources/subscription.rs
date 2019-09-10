@@ -213,6 +213,13 @@ impl Subscription {
     pub fn delete(client: &Client, id: &SubscriptionId) -> Response<Deleted<SubscriptionId>> {
         client.delete(&format!("/subscriptions/{}", id))
     }
+
+    /// Removes a discount attached to a subscription.
+    ///
+    /// You need only supply the unique subscription identifier that was returned upon creation.
+    pub fn delete_discount(client: &Client, id: &SubscriptionId) -> Response<Deleted<()>> {
+        client.delete(&format!("/subscriptions/{}/discount", id))
+    }
 }
 
 impl Object for Subscription {
