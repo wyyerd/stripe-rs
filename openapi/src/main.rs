@@ -1402,6 +1402,8 @@ fn gen_field_rust_type(
                 "Timestamp".into()
             } else if field_name == "monthly_anchor" {
                 "u8".into()
+            } else if field_name == "account_balance" {
+                "i64".into()
             } else if field_name.contains("days") {
                 "u32".into()
             } else if field_name.contains("count")
