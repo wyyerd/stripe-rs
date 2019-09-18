@@ -2,7 +2,7 @@
 // This file was automatically generated.
 // ======================================
 
-use crate::ids::CheckoutSessionId;
+use crate::ids::{CheckoutSessionId, SetupIntentId};
 use crate::params::{Expandable, Object};
 use crate::resources::{Currency, Customer, PaymentIntent, Plan, Sku, Subscription};
 use serde_derive::{Deserialize, Serialize};
@@ -63,6 +63,11 @@ pub struct CheckoutSession {
     ///
     /// card) this Checkout Session is allowed to accept.
     pub payment_method_types: Vec<String>,
+
+    /// The ID of the SetupIntent for Checkout Sessions in setup mode
+    // TODO: Make this `Expandable` once a `SetupIntent` definition is in place
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub setup_intent: Option<SetupIntentId>,
 
     /// The ID of the subscription created if one or more plans were provided.
     #[serde(skip_serializing_if = "Option::is_none")]
