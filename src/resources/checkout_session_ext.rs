@@ -98,7 +98,7 @@ pub struct CheckoutSessionLineItem<'a> {
 
     /// A list of images representing this line item.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub images: Option<Vec<&'a str>>,
+    pub images: Option<Vec<String>>, 
     // TODO: remaining optional fields
 }
 
