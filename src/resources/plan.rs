@@ -5,7 +5,7 @@
 use crate::config::{Client, Response};
 use crate::ids::PlanId;
 use crate::params::{Deleted, Expand, Expandable, List, Metadata, Object, RangeQuery, Timestamp};
-use crate::resources::{Currency, Product, UpTo};
+use crate::resources::{CreateProduct, Currency, Product, UpTo};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "Plan".
@@ -267,6 +267,11 @@ pub struct CreatePlan<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nickname: Option<&'a str>,
 
+    /// The product whose pricing the created plan will represent.
+    ///
+    /// This can either be the ID of an existing product, or a dictionary containing fields used to create a service product.
+    pub product: CreatePlanProduct<'a>,
+
     /// Each element represents a pricing tier.
     ///
     /// This parameter requires `billing_scheme` to be set to `tiered`.
@@ -299,7 +304,7 @@ pub struct CreatePlan<'a> {
 }
 
 impl<'a> CreatePlan<'a> {
-    pub fn new(currency: Currency, interval: PlanInterval) -> Self {
+    pub fn new(currency: Currency, interval: PlanInterval, product: CreatePlanProduct<'a>) -> Self {
         CreatePlan {
             active: Default::default(),
             aggregate_usage: Default::default(),
@@ -313,6 +318,7 @@ impl<'a> CreatePlan<'a> {
             interval_count: Default::default(),
             metadata: Default::default(),
             nickname: Default::default(),
+            product,
             tiers: Default::default(),
             tiers_mode: Default::default(),
             transform_usage: Default::default(),
@@ -320,6 +326,16 @@ impl<'a> CreatePlan<'a> {
             usage_type: Default::default(),
         }
     }
+}
+
+/// Allowed values for the parent product of the plan being created, either a product ID or a new service product to be created.
+#[derive(Clone, Debug, Serialize)]
+#[serde(untagged)]
+pub enum CreatePlanProduct<'a> {
+    /// The ID of the parent product.
+    Id(&'a str),
+    /// The spec for the new service product to create as the parent of the new plan being created.
+    CreateProduct(CreateProduct<'a>),
 }
 
 /// The parameters for `Plan::list`.
