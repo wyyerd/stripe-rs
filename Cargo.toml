@@ -60,8 +60,8 @@ events = []
 webhooks = ["webhook-endpoints", "webhook-events"]
 
 # hyper_tls or hyper_rustls
-nativetls = ["hyper_tls"]
-rustls = ["hyper_rustls"]
+nativetls = ["hyper-tls"]
+rustls = ["hyper-rustls"]
 
 # Enable the blocking client
 blocking = ["tokio/rt-core"]
