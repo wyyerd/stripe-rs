@@ -26,7 +26,7 @@ travis-ci = {repository = "wyyerd/stripe-rs"}
 name = "stripe"
 
 [features]
-default = ["full", "webhook-events", "blocking"]
+default = ["full", "webhook-events", "blocking", "hyper_tls"]
 full = [
 #    "core",
 #    "payment-methods",
@@ -59,6 +59,10 @@ events = []
 # Deprecated. Use either `webhook-events` or `webhook-endpoints` instead.
 webhooks = ["webhook-endpoints", "webhook-events"]
 
+# hyper_tls or hyper_rustls
+hyper_tls = ["hyper_tls"]
+hyper_rustls = ["hyper_rustls"]
+
 # Enable the blocking client
 blocking = ["tokio/rt-core"]
 async = []
@@ -68,7 +72,6 @@ chrono = { version = "0.4", features = ["serde"] }
 futures-util = { version = "0.3.1", default-features = false }
 http = "0.2.0"
 hyper = { version = "0.13", default-features = false, features = ["tcp"] }
-hyper-tls = "0.4.0"
 serde = "1.0.79" # N.B. we use `serde(other)` which was introduced in `1.0.79`
 serde_derive = "1.0.79"
 serde_json = "1.0"
@@ -79,6 +82,10 @@ tokio = { version = "0.2.0", default-features = false, features = ["tcp", "time"
 # Webhook support
 hmac = { version = "0.6", optional = true }
 sha2 = { version = "0.7", optional = true }
+
+# Native Vs Rustls TLS
+hyper-tls = { version = "0.4.0", optional = true }
+hyper-rustls = { version = "0.20", optional = true }
 
 [[example]]
 name = "async_create_charge"
