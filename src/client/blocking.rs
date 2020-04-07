@@ -1,3 +1,4 @@
+use crate::client::Options;
 use crate::client::r#async::Client as AsyncClient;
 use crate::error::Error;
 use crate::params::Headers;
@@ -99,6 +100,16 @@ impl Client {
     /// Make a `POST` http request with just a path
     pub fn post<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> Response<T> {
         self.send_blocking(self.inner.post(path))
+    }
+
+    /// Make a 'POST' http request with urlencoded body and options
+    pub fn post_form_options<T: DeserializeOwned + Send + 'static, F: serde::Serialize>(
+        &self,
+        path: &str,
+        form: F,
+        options: Options,
+    ) -> Response<T> {
+        self.send_blocking(self.inner.post_form_options(path, form, options))
     }
 
     /// Make a `POST` http request with urlencoded body

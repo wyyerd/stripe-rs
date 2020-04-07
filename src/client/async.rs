@@ -1,3 +1,4 @@
+use crate::client::Options;
 use crate::error::{Error, ErrorResponse, RequestError};
 use crate::params::{AppInfo, Headers};
 use crate::resources::ApiVersion;
@@ -139,11 +140,39 @@ impl Client {
         send(&self.client, req)
     }
 
+    /// Make a 'POST' http request with urlencoded body and options
+    pub fn post_form_options<T: DeserializeOwned + Send + 'static, F: serde::Serialize>(
+        &self,
+        path: &str,
+        form: F,
+        options: Options,
+    ) -> Response<T> {
+        let mut headers = self.headers();
+        if let Some(idemkey) = options.idempotency_key {
+            let val = match HeaderValue::from_str(idemkey.as_str()) {
+                Err(e) => return Box::pin(future::ready(Err(Error::Http(crate::error::HttpError::Http(e.into()))))),
+                Ok(v) => v,
+            };
+            headers.insert(HeaderName::from_static("idempotency-key"), val);
+        }
+
+        self.post_form_with_headers(path, form, headers)
+    }
+
     /// Make a `POST` http request with urlencoded body
     pub fn post_form<T: DeserializeOwned + Send + 'static, F: serde::Serialize>(
         &self,
         path: &str,
         form: F,
+    ) -> Response<T> {
+        self.post_form_with_headers(path, form, self.headers())
+    }
+
+    fn post_form_with_headers<T: DeserializeOwned + Send + 'static, F: serde::Serialize>(
+        &self,
+        path: &str,
+        form: F,
+        mut headers: HeaderMap,
     ) -> Response<T> {
         let url = self.url(path);
         let mut req = RequestBuilder::new()
@@ -154,11 +183,12 @@ impl Client {
                 Ok(body) => hyper::Body::from(body),
             })
             .unwrap();
-        *req.headers_mut() = self.headers();
-        req.headers_mut().insert(
-            HeaderName::from_static("content-type"),
-            HeaderValue::from_str("application/x-www-form-urlencoded").unwrap(),
+        headers.insert(
+        HeaderName::from_static("content-type"),
+        HeaderValue::from_str("application/x-www-form-urlencoded").unwrap(),
         );
+        *req.headers_mut() = headers;
+
         send(&self.client, req)
     }
 

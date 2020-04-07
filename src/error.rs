@@ -103,6 +103,8 @@ impl From<std::io::Error> for Error {
 
 #[derive(Debug)]
 pub enum HttpError {
+    // An error parsing HTTP data
+    Http(http::Error),
     /// An error handling HTTP streams.
     Stream(hyper::Error),
     /// The request timed out.
@@ -112,6 +114,7 @@ pub enum HttpError {
 impl std::fmt::Display for HttpError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
+            HttpError::Http(ref err) => err.fmt(f),
             HttpError::Stream(ref err) => err.fmt(f),
             HttpError::Timeout => f.write_str(std::error::Error::description(self)),
         }
@@ -121,6 +124,7 @@ impl std::fmt::Display for HttpError {
 impl std::error::Error for HttpError {
     fn description(&self) -> &str {
         match *self {
+            HttpError::Http(ref err) => err.description(),
             HttpError::Stream(ref err) => err.description(),
             HttpError::Timeout => "request timed out",
         }
@@ -128,6 +132,7 @@ impl std::error::Error for HttpError {
 
     fn cause(&self) -> Option<&dyn std::error::Error> {
         match *self {
+            HttpError::Http(ref err) => Some(err),
             HttpError::Stream(ref err) => Some(err),
             HttpError::Timeout => None,
         }
@@ -146,6 +151,8 @@ pub enum ErrorType {
     Connection,
     #[serde(rename = "authentication_error")]
     Authentication,
+    #[serde(rename = "idempotency_error")]
+    Idempotency,
     #[serde(rename = "card_error")]
     Card,
     #[serde(rename = "invalid_request_error")]

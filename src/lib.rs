@@ -61,6 +61,12 @@ mod client {
     pub mod r#async;
     #[cfg(all(feature = "blocking", not(feature = "async")))]
     pub mod blocking;
+
+    /// Options to be used when making a request
+    #[derive(Clone, Debug, Default)]
+    pub struct Options {
+        pub idempotency_key: Option<String>,
+    }
 }
 
 // Re-export `pub mod async` to be backward-compatible with 0.11.x
@@ -85,6 +91,7 @@ pub use crate::params::{
     Expandable, Headers, IdOrCreate, List, Metadata, Object, RangeBounds, RangeQuery, Timestamp,
 };
 pub use crate::resources::*;
+pub use crate::client::Options;
 
 #[cfg(all(feature = "blocking", not(feature = "async")))]
 mod config {
