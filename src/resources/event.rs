@@ -211,6 +211,7 @@ pub enum EventObject {
     ApplicationFeeRefund(ApplicationFeeRefund),
     Balance(Balance),
     BankAccount(BankAccount),
+    Card(Card),
     Charge(Charge),
     Customer(Customer),
     Dispute(Dispute),
