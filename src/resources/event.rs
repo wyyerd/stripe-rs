@@ -223,6 +223,7 @@ pub enum EventObject {
     InvoiceItem(InvoiceItem),
     Order(Order),
     OrderReturn(OrderReturn),
+    PaymentMethod(PaymentMethod),
     PaymentIntent(PaymentIntent),
     Payout(Payout),
     Plan(Plan),
