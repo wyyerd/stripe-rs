@@ -1,5 +1,5 @@
 [package]
-name = "stripe-openapi-codegen"
+name = "stripe-codegen"
 version = "0.1.0"
 authors = ["Kevin Stenerson <kstenerson@developers.wyyerd.com>"]
 edition = "2018"

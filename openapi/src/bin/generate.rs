@@ -1,5 +1,5 @@
-mod mappings;
-mod metadata;
+use stripe_codegen::mappings;
+use stripe_codegen::metadata;
 
 use heck::{CamelCase, SnakeCase};
 use lazy_static::lazy_static;
