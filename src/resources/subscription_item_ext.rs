@@ -40,6 +40,12 @@ pub struct CreateUsageRecord {
     pub action: Option<UsageRecordAction>,
 }
 
+impl CreateUsageRecord {
+    pub fn new(quantity: u64, timestamp: Timestamp) {
+        CreateUsageRecord { quantity, timestamp, action: None }
+    }
+}
+
 /// An enum specifying possible values for `CreateUsageRecord`'s `action` field.
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
