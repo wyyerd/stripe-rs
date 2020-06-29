@@ -112,6 +112,8 @@ mod subscription_ext;
 #[cfg(feature = "billing")]
 mod subscription_item;
 #[cfg(feature = "billing")]
+mod subscription_item_ext;
+#[cfg(feature = "billing")]
 mod subscription_schedule;
 #[cfg(feature = "billing")]
 mod tax_id;
@@ -141,6 +143,8 @@ pub use self::subscription::*;
 pub use self::subscription_ext::*;
 #[cfg(feature = "billing")]
 pub use self::subscription_item::*;
+#[cfg(feature = "billing")]
+pub use self::subscription_item_ext::*;
 #[cfg(feature = "billing")]
 pub use self::subscription_schedule::*;
 #[cfg(feature = "billing")]
