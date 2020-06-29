@@ -41,7 +41,7 @@ pub struct CreateUsageRecord {
 }
 
 impl CreateUsageRecord {
-    pub fn new(quantity: u64, timestamp: Timestamp) {
+    pub fn new(quantity: u64, timestamp: Timestamp) -> Self {
         CreateUsageRecord { quantity, timestamp, action: None }
     }
 }
