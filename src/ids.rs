@@ -532,6 +532,7 @@ def_id!(RecipientId: String); // FIXME: This doesn't seem to be documented yet
 def_id!(RefundId, "re_");
 def_id!(ReviewId, "prv_");
 def_id!(ScheduledQueryRunId, "sqr_");
+def_id!(SessionId, "bps_");
 def_id!(SetupIntentId, "seti_");
 def_id!(SkuId, "sku_");
 def_id!(SourceId, "src_");
