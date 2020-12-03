@@ -187,6 +187,7 @@ pub enum ErrorCode {
     BankAccountExists,
     BankAccountUnusable,
     BankAccountUnverified,
+    BankAccountVerificationFailed,
     BitcoinUpgradeRequired,
     CardDeclined,
     ChargeAlreadyCaptured,
