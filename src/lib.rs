@@ -61,6 +61,12 @@ mod client {
     pub mod r#async;
     #[cfg(feature = "blocking")]
     pub mod blocking;
+
+    /// Options to be used when making a request
+    #[derive(Clone, Debug, Default)]
+    pub struct Options {
+        pub idempotency_key: Option<String>,
+    }
 }
 
 mod error;
@@ -81,6 +87,7 @@ pub use crate::params::{
     Expandable, Headers, IdOrCreate, List, Metadata, Object, RangeBounds, RangeQuery, Timestamp,
 };
 pub use crate::resources::*;
+pub use crate::client::Options;
 
 #[cfg(feature = "blocking")]
 mod config {
