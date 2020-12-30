@@ -59,7 +59,7 @@ webhook-events = ["events", "hmac", "sha2"]
 events = []
 
 # Enable the blocking client
-blocking = ["tokio/rt-core"]
+blocking = ["tokio/rt"]
 
 default-tls = ["hyper-tls"]
 rustls-tls = ["hyper-rustls"]
@@ -68,15 +68,15 @@ rustls-tls = ["hyper-rustls"]
 chrono = { version = "0.4", features = ["serde"] }
 futures-util = { version = "0.3", default-features = false }
 http = "0.2"
-hyper = { version = "0.13", default-features = false, features = ["tcp"] }
-hyper-tls = { version = "0.4", optional = true }
-hyper-rustls = { version = "0.20", optional = true }
+hyper = { version = "0.14", default-features = false, features = ["http1", "http2", "client", "tcp"] }
+hyper-tls = { version = "0.5", optional = true }
+hyper-rustls = { version = "0.22.1", optional = true }
 serde = "1.0.79" # N.B. we use `serde(other)` which was introduced in `1.0.79`
 serde_derive = "1.0.79"
 serde_json = "1.0"
 serde_qs = "0.5"
 smol_str = "0.1"
-tokio = { version = "0.2", default-features = false, features = ["tcp", "time"] }
+tokio = { version = "1", default-features = false, features = ["net", "time"] }
 
 # Webhook support
 hmac = { version = "0.7", optional = true }
@@ -104,4 +104,4 @@ required-features = ["blocking"]
 
 [dev-dependencies]
 lazy_static = "1.4.0"
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
