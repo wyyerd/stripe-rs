@@ -11,7 +11,6 @@ use serde::de::DeserializeOwned;
 use crate::error::{Error, ErrorResponse, RequestError};
 use crate::params::{AppInfo, Headers};
 use crate::resources::ApiVersion;
-
 #[cfg(feature = "rustls-tls")]
 use hyper_rustls::HttpsConnector;
 #[cfg(feature = "default-tls")]
