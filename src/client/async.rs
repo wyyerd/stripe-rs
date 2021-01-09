@@ -11,11 +11,11 @@ use serde::de::DeserializeOwned;
 use crate::error::{Error, ErrorResponse, RequestError};
 use crate::params::{AppInfo, Headers};
 use crate::resources::ApiVersion;
+
 #[cfg(feature = "rustls-tls")]
 use hyper_rustls::HttpsConnector;
 #[cfg(feature = "default-tls")]
 use hyper_tls::HttpsConnector;
-
 #[cfg(all(feature = "default-tls", feature = "rustls-tls"))]
 compile_error!("You must enable only one TLS implementation");
 #[cfg(not(any(feature = "default-tls", feature = "rustls-tls")))]
