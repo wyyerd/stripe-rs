@@ -84,7 +84,7 @@ sha2 = { version = "0.8", optional = true }
 
 [[example]]
 name = "async_create_charge"
-#required-features = ["async"]
+required-features = ["async"]
 
 [[example]]
 name = "create_charge"
