@@ -21,7 +21,9 @@ where
 
     drop(keep_alive);
     teardown();
-    assert!(result.is_ok())
+    if let Err(err) = result {
+        panic!("{:?}", err)
+    };
 }
 
 fn setup() -> Arc<Mutex<Option<Child>>> {

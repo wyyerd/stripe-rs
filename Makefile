@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 
 
-.PHONY: build-full-blocking build-rustls-tls build-full-async test-full-async test-full-blocking test-rustls-tls
+.PHONY: preinstall build-full-blocking build-rustls-tls build-full-async test-full-async test-full-blocking test-rustls-tls
 
 preinstall:
 	bash preinstall.sh
@@ -31,3 +31,4 @@ build-rustls-tls: preinstall
 test-rustls-tls: build-rustls-tls
 	cargo test --verbose --no-default-features --features "full webhook-events blocking rustls-tls" --workspace --exclude binary_size
 
+all: test-full-blocking test-full-async test-rustls-tls
