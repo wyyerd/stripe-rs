@@ -52,7 +52,7 @@ impl Client {
     pub fn from_url(scheme_host: impl Into<String>, secret_key: impl Into<String>) -> Client {
         let url = scheme_host.into();
         let host = if url.ends_with('/') { format!("{}v1", url) } else { format!("{}/v1", url) };
-        let https = HttpsConnector::new();
+        let https = HttpsConnector::with_native_roots();
         let client = hyper::Client::builder().build(https);
         let mut headers = Headers::default();
         // TODO: Automatically determine the latest supported api version in codegen?
