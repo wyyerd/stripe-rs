@@ -1,7 +1,5 @@
 export STRIPE_MOCK_VERSION=0.90.0
 
-rm -rf stripe-mock
-
 if [[ "$OSTYPE" == "darwin"* ]]; then
   export TARGET=darwin_amd64
 else
