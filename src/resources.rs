@@ -283,6 +283,8 @@ pub use self::webhook_endpoint::*;
 #[cfg(feature = "webhook-endpoints")]
 pub use self::webhook_endpoint_ext::*;
 
+pub use subscription::PlanInterval;
+
 // Fallback types
 #[cfg(not(feature = "full"))]
 mod placeholders;
