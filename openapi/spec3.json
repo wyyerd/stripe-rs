@@ -2622,7 +2622,6 @@
           "metadata",
           "object",
           "paid",
-          "receipt_url",
           "refunded",
           "refunds",
           "status"

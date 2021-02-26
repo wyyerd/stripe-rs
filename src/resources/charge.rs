@@ -147,7 +147,7 @@ pub struct Charge {
     ///
     /// The receipt is kept up-to-date to the latest state of the charge, including any refunds.
     /// If the charge is for an Invoice, the receipt will be stylized as an Invoice receipt.
-    pub receipt_url: String,
+    pub receipt_url: Option<String>,
 
     /// Whether the charge has been fully refunded.
     ///
