@@ -492,14 +492,15 @@ def_id!(FileId, "file_");
 def_id!(FileLinkId, "link_");
 def_id!(InvoiceId, "in_", { _ });
 def_id!(InvoiceItemId, "ii_");
-def_id!(InvoiceLineItemId, "il_");
+def_id!(InvoiceLineItemIdWebhook, "il_");
 
-// def_id!(
-//     enum InvoiceLineItemId {
-//         Item(InvoiceItemId),
-//         Subscription(SubscriptionLineId),
-//     }
-// );
+def_id!(
+    enum InvoiceLineItemId {
+        Item(InvoiceItemId),
+        Subscription(SubscriptionLineId),
+        InvoiceLineItemIdWebhook(InvoiceLineItemIdWebhook),
+    }
+);
 def_id!(IssuingAuthorizationId, "iauth_");
 def_id!(IssuingCardId, "ic_");
 def_id!(IssuingCardholderId, "ich_");
