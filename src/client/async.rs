@@ -1,11 +1,11 @@
 use std::future::Future;
 use std::pin::Pin;
 
-use hyper::client::HttpConnector;
-use hyper::client::connect::dns::GaiResolver;
 use futures_util::future;
 use http::header::{HeaderMap, HeaderName, HeaderValue};
 use http::request::Builder as RequestBuilder;
+use hyper::client::connect::dns::GaiResolver;
+use hyper::client::HttpConnector;
 use serde::de::DeserializeOwned;
 
 use crate::error::{Error, ErrorResponse, RequestError};
@@ -67,7 +67,7 @@ impl Client {
         let url = scheme_host.into();
         let host = if url.ends_with('/') { format!("{}v1", url) } else { format!("{}/v1", url) };
         let https = new_connector();
-        let client = hyper::Client::builder().build(https);
+        let client = hyper::Client::builder().pool_max_idle_per_host(0).build(https);
         let mut headers = Headers::default();
         // TODO: Automatically determine the latest supported api version in codegen?
         headers.stripe_version = Some(ApiVersion::V2019_09_09);
