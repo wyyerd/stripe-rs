@@ -2,8 +2,7 @@ use crate::client::r#async::Client as AsyncClient;
 use crate::error::Error;
 use crate::params::Headers;
 use serde::de::DeserializeOwned;
-use std::cell::RefCell;
-use std::sync::Arc;
+use std::sync::{Arc};
 use std::time::Duration;
 
 /// The delay after which the blocking `Client` will assume the request has failed.
@@ -24,7 +23,7 @@ pub(crate) fn err<T>(err: crate::Error) -> Response<T> {
 #[derive(Clone)]
 pub struct Client {
     inner: AsyncClient,
-    runtime: Arc<RefCell<tokio::runtime::Runtime>>,
+    runtime: Arc<tokio::runtime::Runtime>,
 }
 
 impl Client {
@@ -44,7 +43,7 @@ impl Client {
             .enable_time() // use separate `io/time` instead of `all` to ensure `tokio/time` is enabled
             .build()
             .unwrap();
-        Client { inner, runtime: Arc::new(RefCell::new(runtime)) }
+        Client { inner, runtime: Arc::new(runtime) }
     }
 
     /// Clones a new client with different headers.
@@ -113,7 +112,7 @@ impl Client {
         &self,
         request: super::r#async::Response<T>,
     ) -> Response<T> {
-        match self.runtime.borrow_mut().block_on(async {
+        match self.runtime.block_on(async {
             // N.B. The `tokio::time::timeout` must be called from within a running async
             //      context or else it will panic (it registers with the thread-local timer).
             tokio::time::timeout(DEFAULT_TIMEOUT, request).await
