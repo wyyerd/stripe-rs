@@ -71,8 +71,8 @@ http = "0.2"
 hyper = { version = "0.14", default-features = false, features = ["http1", "http2", "client", "tcp"] }
 hyper-tls = { version = "0.5", optional = true }
 hyper-rustls = { version = "0.22.1", optional = true }
-serde = "<1.0.118, >=1.0.79" # N.B. we use `serde(other)` which was introduced in `1.0.79`
-serde_derive = "<1.0.118, >=1.0.79"
+serde = ">=1.0.79" # N.B. we use `serde(other)` which was introduced in `1.0.79`
+serde_derive = ">=1.0.79"
 serde_json = "1.0"
 serde_qs = "0.5"
 smol_str = "0.1"
