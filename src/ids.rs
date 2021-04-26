@@ -458,6 +458,7 @@ impl std::error::Error for ParseIdError {
 
 def_id!(AccountId, "acct_");
 def_id!(AlipayAccountId, "aliacc_");
+def_id!(ApplicationId, "ca_");
 def_id!(ApplicationFeeId, "fee_");
 def_id!(ApplicationFeeRefundId, "fr_");
 def_id!(BalanceTransactionId, "txn_");
