@@ -30,6 +30,6 @@ impl PaymentMethod {
         client: &Client,
         payment_method_id: &PaymentMethodId,
     ) -> Response<PaymentMethod> {
-        client.post_form(&format!("/payment_methods/{}/detach", payment_method_id), ())
+        client.post(&format!("/payment_methods/{}/detach", payment_method_id))
     }
 }
