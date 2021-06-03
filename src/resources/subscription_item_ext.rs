@@ -1,5 +1,5 @@
 use crate::config::{Client, Response};
-use crate::ids::{InvoiceItemId, SubscriptionItemId, UsageRecordId, UsageRecordSummaryId};
+use crate::ids::{InvoiceId, SubscriptionItemId, UsageRecordId, UsageRecordSummaryId};
 use crate::params::{Expand, List, Timestamp};
 use crate::OpenPeriod;
 use serde_derive::{Deserialize, Serialize};
@@ -80,7 +80,7 @@ pub struct UsageRecordSummary {
     pub id: UsageRecordSummaryId,
 
     /// The invoice in which this usage period has been billed for.
-    pub invoice: Option<InvoiceItemId>,
+    pub invoice: Option<InvoiceId>,
 
     // The usage period.
     pub period: OpenPeriod,
