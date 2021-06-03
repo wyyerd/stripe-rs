@@ -1,7 +1,7 @@
 use crate::config::{Client, Response};
 use crate::ids::{InvoiceItemId, SubscriptionItemId, UsageRecordId, UsageRecordSummaryId};
 use crate::params::{Expand, List, Timestamp};
-use crate::Period;
+use crate::OpenPeriod;
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "UsageRecord".
@@ -83,7 +83,7 @@ pub struct UsageRecordSummary {
     pub invoice: Option<InvoiceItemId>,
 
     // The usage period.
-    pub period: Period,
+    pub period: OpenPeriod,
 
     /// The ID of the subscription item this summary is describing.
     pub subscription_item: SubscriptionItemId,

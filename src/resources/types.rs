@@ -417,6 +417,13 @@ pub struct Period {
     pub end: Timestamp,
 }
 
+/// OpenPeriod is a structure representing a possibly open-ended period with optional start and end dates.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OpenPeriod {
+    pub start: Option<Timestamp>,
+    pub end: Option<Timestamp>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Shipping {
     pub name: String,
