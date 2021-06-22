@@ -530,7 +530,7 @@ def_id!(PlanId: String); // N.B. A plan id can be user-provided so can be any ar
 def_id!(PriceId: String); // TODO: Figure out what prefix this id has
 def_id!(ProductId: String); // N.B. A product id can be user-provided so can be any arbitrary string
 def_id!(RecipientId: String); // FIXME: This doesn't seem to be documented yet
-def_id!(RefundId, "re_");
+def_id!(RefundId, "re_" | "pyr_");
 def_id!(ReviewId, "prv_");
 def_id!(ScheduledQueryRunId, "sqr_");
 def_id!(SetupIntentId, "seti_");
