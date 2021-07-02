@@ -5,6 +5,7 @@ use crate::resources::{
     Account, Application, Charge, Currency, Customer, Invoice, PaymentIntentOffSession,
     PaymentMethod, PaymentSource, Review, Shipping, TransferDataParams,
 };
+use crate::TransferDataUpdateParams;
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "PaymentIntent".
@@ -480,6 +481,8 @@ pub struct PaymentIntentUpdateParams<'a> {
     pub source: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transfer_group: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transfer_data: Option<TransferDataUpdateParams>,
 }
 
 /// The set of parameters that can be used when confirming a payment_intent object.
