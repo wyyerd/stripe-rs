@@ -79,8 +79,8 @@ smol_str = "0.1"
 tokio = "1"
 
 # Webhook support
-hmac = { version = "0.7", optional = true }
-sha2 = { version = "0.8", optional = true }
+hmac = { version = "0.11", optional = true }
+sha2 = { version = "0.9", optional = true }
 
 #[[example]]
 #name = "async_create_charge"

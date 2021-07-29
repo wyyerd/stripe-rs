@@ -8,6 +8,7 @@ use hmac::{Hmac, Mac};
 use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "webhook-events")]
 use sha2::Sha256;
+use hmac::NewMac;
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum EventType {
@@ -257,10 +258,10 @@ impl Webhook {
         // Compute HMAC with the SHA256 hash function, using endpoing secret as key
         // and signed_payload string as the message.
         let mut mac =
-            Hmac::<Sha256>::new_varkey(secret.as_bytes()).map_err(|_| WebhookError::BadKey)?;
-        mac.input(signed_payload.as_bytes());
-        let mac_result = mac.result();
-        let hex = to_hex(mac_result.code().as_slice());
+            Hmac::<Sha256>::new_from_slice(secret.as_bytes()).map_err(|_| WebhookError::BadKey)?;
+        mac.update(signed_payload.as_bytes());
+        let mac_result = mac.finalize();
+        let hex = to_hex(mac_result.into_bytes().as_ref());
         if hex != signature.v1 {
             return Err(WebhookError::BadSignature);
         }
