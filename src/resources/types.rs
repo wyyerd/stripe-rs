@@ -370,11 +370,87 @@ pub struct PackageDimensions {
     pub width: f64,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PaymentMethodAchDebit {
+    /// Type of entity that holds the account. This can be either `individual` or `company`.
+    pub account_holder_type: AccountHolderType,
+
+    /// Name of the bank associated with the bank account.
+    pub bank_name: String,
+
+    /// Two-letter ISO code representing the country the bank account is located in.
+    pub country: String,
+
+    /// Uniquely identifies this particular bank account. You can use this attribute to check whether two bank accounts are the same.
+    pub fingerprint: String,
+
+    /// Last four digits of the bank account number.
+    pub last4: String,
+
+    /// Routing transit number of the bank account.
+    pub routing_number: String,
+}
+
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+pub enum PaymentMethodCardBrand {
+    #[serde(rename = "amex")]
+    AmericanExpress,
+    #[serde(rename = "diners")]
+    DinersClub,
+    #[serde(rename = "discover")]
+    Discover,
+    #[serde(rename = "jcb")]
+    JCB,
+    #[serde(rename = "visa")]
+    Visa,
+    #[serde(rename = "mastercard")]
+    MasterCard,
+    #[serde(rename = "unionpay")]
+    UnionPay,
+
+    /// An unknown card brand.
+    ///
+    /// May also be a variant not yet supported by the library.
+    #[serde(other)]
+    #[serde(rename = "unknown")]
+    Unknown,
+}
+
+impl From<PaymentMethodCardBrand> for CardBrand {
+    fn from(brand: PaymentMethodCardBrand) -> Self {
+        match brand {
+            PaymentMethodCardBrand::AmericanExpress => CardBrand::AmericanExpress,
+            PaymentMethodCardBrand::DinersClub => CardBrand::DinersClub,
+            PaymentMethodCardBrand::Discover => CardBrand::Discover,
+            PaymentMethodCardBrand::JCB => CardBrand::JCB,
+            PaymentMethodCardBrand::Visa => CardBrand::Visa,
+            PaymentMethodCardBrand::MasterCard => CardBrand::MasterCard,
+            PaymentMethodCardBrand::UnionPay => CardBrand::UnionPay,
+            PaymentMethodCardBrand::Unknown => CardBrand::Unknown,
+        }
+    }
+}
+
+impl From<CardBrand> for PaymentMethodCardBrand {
+fn from(brand: CardBrand) -> Self {
+        match brand {
+            CardBrand::AmericanExpress => PaymentMethodCardBrand::AmericanExpress,
+            CardBrand::DinersClub => PaymentMethodCardBrand::DinersClub,
+            CardBrand::Discover => PaymentMethodCardBrand::Discover,
+            CardBrand::JCB => PaymentMethodCardBrand::JCB,
+            CardBrand::Visa => PaymentMethodCardBrand::Visa,
+            CardBrand::MasterCard => PaymentMethodCardBrand::MasterCard,
+            CardBrand::UnionPay => PaymentMethodCardBrand::UnionPay,
+            CardBrand::Unknown => PaymentMethodCardBrand::Unknown,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct PaymentMethodCard {
     /// Can be `American Express`, `Diners Club`, `Discover`, `JCB`, `MasterCard`, `UnionPay`, `Visa`, or `Unknown`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub brand: Option<CardBrand>,
+    pub brand: Option<PaymentMethodCardBrand>,
 
     /// Two-letter ISO code representing the country of the card.
     ///
@@ -404,10 +480,28 @@ pub struct PaymentMethodCard {
 
 // TODO: Implement
 /// This type is a stub that still needs to be implemented.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum PaymentMethodDetailsType {
+    AchDebit,
+    Card,
+
+    /// An unknown payment method details type.
+    ///
+    /// May also be a variant not yet supported by the library.
+    #[serde(other)]
+    Unknown,
+}
+
+// TODO: Implement
+/// This type is a stub that still needs to be implemented.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PaymentMethodDetails {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub ach_debit: Option<PaymentMethodAchDebit>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub card: Option<PaymentMethodCard>,
+    pub r#type: PaymentMethodDetailsType,
 }
 
 /// Period is a structure representing a start and end dates.
