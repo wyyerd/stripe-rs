@@ -480,6 +480,8 @@ def_id!(
         TransferReversal(TransferReversalId),
     }
 );
+def_id!(BillingPortalSessionId, "bps_");
+def_id!(BillingPortalConfigurationId, "bpc_");
 def_id!(CardId, "card_");
 def_id!(CardTokenId, "tok_");
 def_id!(ChargeId, "ch_" | "py_"); // TODO: Understand (and then document) why "py_" is a valid charge id

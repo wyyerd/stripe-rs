@@ -122,6 +122,10 @@ mod tax_id;
 #[cfg(feature = "billing")]
 mod tax_rate;
 #[cfg(feature = "billing")]
+mod billing_portal_session;
+#[cfg(feature = "billing")]
+mod billing_portal_session_ext;
+#[cfg(feature = "billing")]
 pub use self::coupon::*;
 #[cfg(feature = "billing")]
 pub use self::discount::*;
@@ -151,6 +155,10 @@ pub use self::subscription_schedule::*;
 pub use self::tax_id::*;
 #[cfg(feature = "billing")]
 pub use self::tax_rate::*;
+#[cfg(feature = "billing")]
+pub use self::billing_portal_session::*;
+#[cfg(feature = "billing")]
+pub use self::billing_portal_session_ext::*;
 
 // Connect
 #[cfg(feature = "connect")]
