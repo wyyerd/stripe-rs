@@ -98,16 +98,15 @@ impl UsageRecordSummary {
     /// The list is sorted in reverse-chronological order (newest first). The first list item represents the most current usage period that hasn’t ended yet. Since new usage records can still be added, the returned summary information for the subscription item’s ID should be seen as unstable until the subscription billing period ends.
     pub fn list(
         client: &Client,
+        id: &SubscriptionItemId,
         params: ListUsageRecordSummaries<'_>,
     ) -> Response<List<UsageRecordSummary>> {
         // This is a bit of a strange API since params.subscription_item needs to go into the URL,
         // but the rest of the parameters (except subscription_item) need to be passed via query params.
         let url = format!(
             "/subscription_items/{}/usage_record_summaries",
-            &params.subscription_item.as_ref().expect("params must have subscription_item set")
+            &id
         );
-        let mut params = params;
-        params.subscription_item = None;
         client.get_query(&url, &params)
     }
 }
@@ -141,20 +140,15 @@ pub struct ListUsageRecordSummaries<'a> {
     /// For instance, if you make a list request and receive 100 objects, ending with `obj_foo`, your subsequent call can include `starting_after=obj_foo` in order to fetch the next page of the list.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub starting_after: Option<UsageRecordSummaryId>,
-
-    /// The ID of the subscription whose usage record summaries will be retrieved.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subscription_item: Option<SubscriptionItemId>,
 }
 
 impl<'a> ListUsageRecordSummaries<'a> {
-    pub fn new(subscription_item: SubscriptionItemId) -> Self {
+    pub fn new() -> Self {
         ListUsageRecordSummaries {
             ending_before: Default::default(),
             expand: Default::default(),
             limit: Default::default(),
             starting_after: Default::default(),
-            subscription_item: Some(subscription_item),
         }
     }
 }
