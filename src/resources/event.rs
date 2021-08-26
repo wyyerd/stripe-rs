@@ -3,12 +3,12 @@ use crate::ids::EventId;
 use crate::resources::*;
 
 use chrono::Utc;
+use hmac::NewMac;
 #[cfg(feature = "webhook-events")]
 use hmac::{Hmac, Mac};
 use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "webhook-events")]
 use sha2::Sha256;
-use hmac::NewMac;
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum EventType {
