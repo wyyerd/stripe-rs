@@ -1,6 +1,6 @@
 use crate::config::{Client, Response};
 use crate::ids::{InvoiceId, SubscriptionItemId, UsageRecordId, UsageRecordSummaryId};
-use crate::params::{Expand, List, Timestamp};
+use crate::params::{Expand, List, Object, Timestamp};
 use crate::OpenPeriod;
 use serde_derive::{Deserialize, Serialize};
 
@@ -103,11 +103,18 @@ impl UsageRecordSummary {
     ) -> Response<List<UsageRecordSummary>> {
         // This is a bit of a strange API since params.subscription_item needs to go into the URL,
         // but the rest of the parameters (except subscription_item) need to be passed via query params.
-        let url = format!(
-            "/subscription_items/{}/usage_record_summaries",
-            &id
-        );
+        let url = format!("/subscription_items/{}/usage_record_summaries", &id);
         client.get_query(&url, &params)
+    }
+}
+
+impl Object for UsageRecordSummary {
+    type Id = UsageRecordSummaryId;
+    fn id(&self) -> Self::Id {
+        self.id.clone()
+    }
+    fn object(&self) -> &'static str {
+        "usage_record_summary"
     }
 }
 
