@@ -154,26 +154,26 @@ pub enum CheckResult {
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum CardBrand {
-    #[serde(rename = "American Express")]
+    #[serde(rename = "amex")]
     AmericanExpress,
-    #[serde(rename = "Diners Club")]
+    #[serde(rename = "diners")]
     DinersClub,
-    #[serde(rename = "Discover")]
+    #[serde(rename = "discover")]
     Discover,
-    #[serde(rename = "JCB")]
+    #[serde(rename = "jcb")]
     JCB,
-    #[serde(rename = "Visa")]
+    #[serde(rename = "visa")]
     Visa,
-    #[serde(rename = "MasterCard")]
+    #[serde(rename = "mastercard")]
     MasterCard,
-    #[serde(rename = "UnionPay")]
+    #[serde(rename = "unionpay")]
     UnionPay,
 
     /// An unknown card brand.
     ///
     /// May also be a variant not yet supported by the library.
     #[serde(other)]
-    #[serde(rename = "Unknown")]
+    #[serde(rename = "unknown")]
     Unknown,
 }
 
