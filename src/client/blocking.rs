@@ -87,10 +87,10 @@ impl Client {
         path: &str,
         params: P,
     ) -> Response<List<T>> {
-        let resp = self.send_blocking(self.inner.get_query(path, params.clone()));
+        let resp: Response<List<T>> = self.send_blocking(self.inner.get_query(path, params.clone()));
 
         match resp {
-            Ok(list) => list.params(params),
+            Ok(list) => list.params(&params),
             Err(e) => Err(e)
         }
     }
