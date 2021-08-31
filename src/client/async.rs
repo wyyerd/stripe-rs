@@ -127,6 +127,17 @@ impl Client {
         send(&self.client, req)
     }
 
+    /// Make a `GET` http request with url query parameters, returning a List that can be paginated
+    pub fn get_list<T: DeserializeOwned + Send + 'static, P: serde::Serialize>(
+        &self,
+        path: &str,
+        params: P,
+    ) -> Response<T> {
+        // TODO: After getting the response, use Future::map or Future::then to add the params to the list
+        //       This should be done at the same time that params::List::get_all is made async.
+        self.get_query(path, params)
+    }
+
     /// Make a `DELETE` http request with just a path
     pub fn delete<T: DeserializeOwned + Send + 'static>(&self, path: &str) -> Response<T> {
         let url = self.url(path);

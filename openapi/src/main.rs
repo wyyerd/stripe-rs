@@ -1345,7 +1345,7 @@ fn gen_impl_requests(
                     out.push_str("<'_>) -> Response<List<");
                     out.push_str(&rust_struct);
                     out.push_str(">> {\n");
-                    out.push_str("        client.get_query(\"/");
+                    out.push_str("        client.get_list(\"/");
                     out.push_str(&segments.join("/"));
                     out.push_str("\", &params)\n");
                     out.push_str("    }\n");
