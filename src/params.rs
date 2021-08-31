@@ -208,7 +208,19 @@ impl<T: DeserializeOwned + Send + 'static> List<T> {
                     url.push_str(&format!("&{}", params));
                 }
             }
-            client.get(&url)
+            let resp = client.get(&url);
+
+            // TODO: Also do this for async
+            #[cfg(feature = "blocking")]
+            let resp = resp.map(|resp| match resp {
+                Ok(list) => {
+                    list.params = params.cloned();
+                    Ok(list)
+                }
+                Err(e) => Err(e),
+            });
+
+            resp
         } else {
             err(Error::Unsupported("URL for fetching additional data uses different API version"))
         }
