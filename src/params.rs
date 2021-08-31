@@ -212,12 +212,9 @@ impl<T: DeserializeOwned + Send + 'static> List<T> {
 
             // TODO: Also do this for async
             #[cfg(feature = "blocking")]
-            let resp = resp.map(|resp| match resp {
-                Ok(list) => {
-                    list.params = params.cloned();
-                    Ok(list)
-                }
-                Err(e) => Err(e),
+            let resp: Result<List<T>, Error> = resp.map(|mut list: List<T>| {
+                list.params = params.map(|s| s.to_string());
+                list
             });
 
             resp
