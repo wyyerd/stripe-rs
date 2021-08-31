@@ -128,7 +128,7 @@ pub struct Plan {
 impl Plan {
     /// Returns a list of your plans.
     pub fn list(client: &Client, params: ListPlans<'_>) -> Response<List<Plan>> {
-        client.get_query("/plans", &params)
+        client.get_list("/plans", &params)
     }
 
     /// You can create plans using the API, or in the Stripe [Dashboard](https://dashboard.stripe.com/subscriptions/products).

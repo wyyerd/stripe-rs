@@ -108,7 +108,7 @@ impl SubscriptionSchedule {
         id: &SubscriptionScheduleId,
         expand: &[&str],
     ) -> Response<SubscriptionSchedule> {
-        client.get_query(&format!("/subscription_schedules/{}", id), &Expand { expand })
+        client.get_list(&format!("/subscription_schedules/{}", id), &Expand { expand })
     }
 
     /// Updates an existing subscription schedule.

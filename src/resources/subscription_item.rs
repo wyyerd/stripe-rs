@@ -63,7 +63,7 @@ impl SubscriptionItem {
         client: &Client,
         params: ListSubscriptionItems<'_>,
     ) -> Response<List<SubscriptionItem>> {
-        client.get_query("/subscription_items", &params)
+        client.get_list("/subscription_items", &params)
     }
 
     /// Adds a new item to an existing subscription.

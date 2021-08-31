@@ -78,7 +78,7 @@ impl Recipient {
     ///
     /// The recipients are returned sorted by creation date, with the most recently created recipients appearing first.
     pub fn list(client: &Client, params: ListRecipients<'_>) -> Response<List<Recipient>> {
-        client.get_query("/recipients", &params)
+        client.get_list("/recipients", &params)
     }
 
     /// Creates a new `Recipient` object and verifies the recipient’s identity.
