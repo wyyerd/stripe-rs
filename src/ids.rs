@@ -551,6 +551,8 @@ def_id!(
 def_id!(TopupId, "tu_");
 def_id!(TransferId, "tr_");
 def_id!(TransferReversalId, "trr_");
+def_id!(UsageRecordId, "mbur_");
+def_id!(UsageRecordSummaryId, "sis_");
 def_id!(WebhookEndpointId, "we_");
 
 impl InvoiceId {
