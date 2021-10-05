@@ -9,8 +9,6 @@ use crate::resources::FileLink;
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "File".
-///
-/// For more details see [https://stripe.com/docs/api/files/object](https://stripe.com/docs/api/files/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct File {
     /// Unique identifier for the object.
@@ -21,6 +19,10 @@ pub struct File {
     /// Measured in seconds since the Unix epoch.
     pub created: Timestamp,
 
+    /// The time at which the file expires and is no longer available in epoch seconds.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<Timestamp>,
+
     /// A filename for the file, suitable for saving to a filesystem.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
@@ -29,9 +31,7 @@ pub struct File {
     #[serde(default)]
     pub links: List<FileLink>,
 
-    /// The purpose of the file.
-    ///
-    /// Possible values are `additional_verification`, `business_icon`, `business_logo`, `customer_signature`, `dispute_evidence`, `finance_report_run`, `identity_document`, `pci_document`, `sigma_scheduled_query`, or `tax_document_user_upload`.
+    /// The [purpose](https://stripe.com/docs/file-upload#uploading-a-file) of the uploaded file.
     pub purpose: FilePurpose,
 
     /// The size in bytes of the file object.
@@ -132,14 +132,18 @@ impl<'a> ListFiles<'a> {
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum FilePurpose {
+    AccountRequirement,
     AdditionalVerification,
     BusinessIcon,
     BusinessLogo,
     CustomerSignature,
     DisputeEvidence,
+    DocumentProviderIdentityDocument,
     FinanceReportRun,
     IdentityDocument,
+    IdentityDocumentDownloadable,
     PciDocument,
+    Selfie,
     SigmaScheduledQuery,
     TaxDocumentUserUpload,
 }
@@ -147,14 +151,18 @@ pub enum FilePurpose {
 impl FilePurpose {
     pub fn as_str(self) -> &'static str {
         match self {
+            FilePurpose::AccountRequirement => "account_requirement",
             FilePurpose::AdditionalVerification => "additional_verification",
             FilePurpose::BusinessIcon => "business_icon",
             FilePurpose::BusinessLogo => "business_logo",
             FilePurpose::CustomerSignature => "customer_signature",
             FilePurpose::DisputeEvidence => "dispute_evidence",
+            FilePurpose::DocumentProviderIdentityDocument => "document_provider_identity_document",
             FilePurpose::FinanceReportRun => "finance_report_run",
             FilePurpose::IdentityDocument => "identity_document",
+            FilePurpose::IdentityDocumentDownloadable => "identity_document_downloadable",
             FilePurpose::PciDocument => "pci_document",
+            FilePurpose::Selfie => "selfie",
             FilePurpose::SigmaScheduledQuery => "sigma_scheduled_query",
             FilePurpose::TaxDocumentUserUpload => "tax_document_user_upload",
         }

@@ -9,8 +9,6 @@ use crate::resources::{BalanceTransaction, BankAccount, Card, Currency};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "Payout".
-///
-/// For more details see [https://stripe.com/docs/api/payouts/object](https://stripe.com/docs/api/payouts/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Payout {
     /// Unique identifier for the object.
@@ -68,9 +66,10 @@ pub struct Payout {
     /// Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
     pub livemode: bool,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
+    #[serde(default)]
     pub metadata: Metadata,
 
     /// The method used to send this payout, which can be `standard` or `instant`.
@@ -78,6 +77,14 @@ pub struct Payout {
     /// `instant` is only supported for payouts to debit cards.
     /// (See [Instant payouts for marketplaces](https://stripe.com/blog/instant-payouts-for-marketplaces) for more information.).
     pub method: String,
+
+    /// If the payout reverses another, this is the ID of the original payout.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub original_payout: Option<Expandable<Payout>>,
+
+    /// If the payout was reversed, this is the ID of the payout that reverses this payout.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reversed_by: Option<Expandable<Payout>>,
 
     /// The source balance this payout came from.
     ///
@@ -163,7 +170,7 @@ pub struct CreatePayout<'a> {
     #[serde(skip_serializing_if = "Expand::is_empty")]
     pub expand: &'a [&'a str],
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -270,7 +277,7 @@ pub struct UpdatePayout<'a> {
     #[serde(skip_serializing_if = "Expand::is_empty")]
     pub expand: &'a [&'a str],
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.

@@ -3,14 +3,12 @@
 // ======================================
 
 use crate::config::{Client, Response};
-use crate::ids::ProductId;
+use crate::ids::{ProductId, TaxCodeId};
 use crate::params::{Deleted, Expand, List, Metadata, Object, RangeQuery, Timestamp};
 use crate::resources::PackageDimensions;
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "Product".
-///
-/// For more details see [https://stripe.com/docs/api/products/object](https://stripe.com/docs/api/products/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Product {
     /// Unique identifier for the object.
@@ -20,27 +18,11 @@ pub struct Product {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
 
-    /// A list of up to 5 attributes that each SKU can provide values for (e.g., `["color", "size"]`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub attributes: Option<Vec<String>>,
-
-    /// A short one-line description of the product, meant to be displayable to the customer.
-    ///
-    /// Only applicable to products of `type=good`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub caption: Option<String>,
-
     /// Time at which the object was created.
     ///
     /// Measured in seconds since the Unix epoch.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created: Option<Timestamp>,
-
-    /// An array of connect application identifiers that cannot purchase this product.
-    ///
-    /// Only applicable to products of `type=good`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub deactivate_on: Option<Vec<String>>,
 
     // Always true for a deleted object
     #[serde(default)]
@@ -60,7 +42,7 @@ pub struct Product {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub livemode: Option<bool>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
@@ -73,15 +55,10 @@ pub struct Product {
     pub name: Option<String>,
 
     /// The dimensions of this product for shipping purposes.
-    ///
-    /// A SKU associated with this product can override this value by having its own `package_dimensions`.
-    /// Only applicable to products of `type=good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub package_dimensions: Option<PackageDimensions>,
 
-    /// Whether this product is a shipped good.
-    ///
-    /// Only applicable to products of `type=good`.
+    /// Whether this product is shipped (i.e., physical goods).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub shippable: Option<bool>,
 
@@ -91,12 +68,10 @@ pub struct Product {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statement_descriptor: Option<String>,
 
-    /// The type of the product.
-    ///
-    /// The product is either of type `good`, which is eligible for use with Orders and SKUs, or `service`, which is eligible for use with Subscriptions and Plans.
-    #[serde(rename = "type")]
+    // TODO: How do we encade a TaxCode?
+    /// A [tax code](https://stripe.com/docs/tax/tax-codes) ID.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_: Option<ProductType>,
+    pub tax_code: Option<()>,
 
     /// A label that represents units of this product in Stripe and on customers’ receipts and invoices.
     ///
@@ -111,8 +86,6 @@ pub struct Product {
     pub updated: Option<Timestamp>,
 
     /// A URL of a publicly-accessible webpage for this product.
-    ///
-    /// Only applicable to products of `type=good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
 }
@@ -146,8 +119,8 @@ impl Product {
 
     /// Delete a product.
     ///
-    /// Deleting a product with type=`good` is only possible if it has no SKUs associated with it.
-    /// Deleting a product with type=`service` is only possible if it has no plans associated with it.
+    /// Deleting a product is only possible if it has no prices associated with it.
+    /// Additionally, deleting a product with `type=good` is only possible if it has no SKUs associated with it.
     pub fn delete(client: &Client, id: &ProductId) -> Response<Deleted<ProductId>> {
         client.delete(&format!("/products/{}", id))
     }
@@ -172,22 +145,6 @@ pub struct CreateProduct<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
 
-    /// A list of up to 5 alphanumeric attributes.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub attributes: Option<Vec<String>>,
-
-    /// A short one-line description of the product, meant to be displayable to the customer.
-    ///
-    /// May only be set if type=`good`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub caption: Option<&'a str>,
-
-    /// An array of Connect application names or identifiers that should not be able to order the SKUs for this product.
-    ///
-    /// May only be set if type=`good`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub deactivate_on: Option<Vec<String>>,
-
     /// The product's description, meant to be displayable to the customer.
     ///
     /// Use this field to optionally store a long form explanation of the product being sold for your own rendering purposes.
@@ -208,7 +165,7 @@ pub struct CreateProduct<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<Vec<String>>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -222,16 +179,10 @@ pub struct CreateProduct<'a> {
     pub name: &'a str,
 
     /// The dimensions of this product for shipping purposes.
-    ///
-    /// A SKU associated with this product can override this value by having its own `package_dimensions`.
-    /// May only be set if type=`good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub package_dimensions: Option<PackageDimensions>,
 
     /// Whether this product is shipped (i.e., physical goods).
-    ///
-    /// Defaults to `true`.
-    /// May only be set if type=`good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub shippable: Option<bool>,
 
@@ -243,14 +194,9 @@ pub struct CreateProduct<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statement_descriptor: Option<&'a str>,
 
-    /// The type of the product.
-    ///
-    /// Defaults to `service` if not explicitly specified, enabling use of this product with Subscriptions and Plans.
-    /// Set this parameter to `good` to use this product with Orders and SKUs.
-    /// On API versions before `2018-02-05`, this field defaults to `good` for compatibility reasons.
-    #[serde(rename = "type")]
+    /// A [tax code](https://stripe.com/docs/tax/tax-codes) ID.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_: Option<ProductType>,
+    pub tax_code: Option<TaxCodeId>,
 
     /// A label that represents units of this product in Stripe and on customers’ receipts and invoices.
     ///
@@ -259,8 +205,6 @@ pub struct CreateProduct<'a> {
     pub unit_label: Option<&'a str>,
 
     /// A URL of a publicly-accessible webpage for this product.
-    ///
-    /// May only be set if type=`good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<&'a str>,
 }
@@ -269,9 +213,6 @@ impl<'a> CreateProduct<'a> {
     pub fn new(name: &'a str) -> Self {
         CreateProduct {
             active: Default::default(),
-            attributes: Default::default(),
-            caption: Default::default(),
-            deactivate_on: Default::default(),
             description: Default::default(),
             expand: Default::default(),
             id: Default::default(),
@@ -281,7 +222,7 @@ impl<'a> CreateProduct<'a> {
             package_dimensions: Default::default(),
             shippable: Default::default(),
             statement_descriptor: Default::default(),
-            type_: Default::default(),
+            tax_code: Default::default(),
             unit_label: Default::default(),
             url: Default::default(),
         }
@@ -331,11 +272,6 @@ pub struct ListProducts<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub starting_after: Option<ProductId>,
 
-    /// Only return products of this type.
-    #[serde(rename = "type")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_: Option<ProductType>,
-
     /// Only return products with the given url.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<&'a str>,
@@ -352,7 +288,6 @@ impl<'a> ListProducts<'a> {
             limit: Default::default(),
             shippable: Default::default(),
             starting_after: Default::default(),
-            type_: Default::default(),
             url: Default::default(),
         }
     }
@@ -364,25 +299,6 @@ pub struct UpdateProduct<'a> {
     /// Whether the product is available for purchase.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
-
-    /// A list of up to 5 alphanumeric attributes that each SKU can provide values for (e.g., `["color", "size"]`).
-    ///
-    /// If a value for `attributes` is specified, the list specified will replace the existing attributes list on this product.
-    /// Any attributes not present after the update will be deleted from the SKUs for this product.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub attributes: Option<Vec<String>>,
-
-    /// A short one-line description of the product, meant to be displayable to the customer.
-    ///
-    /// May only be set if `type=good`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub caption: Option<&'a str>,
-
-    /// An array of Connect application names or identifiers that should not be able to order the SKUs for this product.
-    ///
-    /// May only be set if `type=good`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub deactivate_on: Option<Vec<String>>,
 
     /// The product's description, meant to be displayable to the customer.
     ///
@@ -398,7 +314,7 @@ pub struct UpdateProduct<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub images: Option<Vec<String>>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -413,16 +329,10 @@ pub struct UpdateProduct<'a> {
     pub name: Option<&'a str>,
 
     /// The dimensions of this product for shipping purposes.
-    ///
-    /// A SKU associated with this product can override this value by having its own `package_dimensions`.
-    /// May only be set if `type=good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub package_dimensions: Option<PackageDimensions>,
 
     /// Whether this product is shipped (i.e., physical goods).
-    ///
-    /// Defaults to `true`.
-    /// May only be set if `type=good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub shippable: Option<bool>,
 
@@ -435,6 +345,10 @@ pub struct UpdateProduct<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statement_descriptor: Option<&'a str>,
 
+    /// A [tax code](https://stripe.com/docs/tax/tax-codes) ID.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_code: Option<String>,
+
     /// A label that represents units of this product in Stripe and on customers’ receipts and invoices.
     ///
     /// When set, this will be included in associated invoice line item descriptions.
@@ -443,8 +357,6 @@ pub struct UpdateProduct<'a> {
     pub unit_label: Option<&'a str>,
 
     /// A URL of a publicly-accessible webpage for this product.
-    ///
-    /// May only be set if `type=good`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url: Option<&'a str>,
 }
@@ -453,9 +365,6 @@ impl<'a> UpdateProduct<'a> {
     pub fn new() -> Self {
         UpdateProduct {
             active: Default::default(),
-            attributes: Default::default(),
-            caption: Default::default(),
-            deactivate_on: Default::default(),
             description: Default::default(),
             expand: Default::default(),
             images: Default::default(),
@@ -464,37 +373,9 @@ impl<'a> UpdateProduct<'a> {
             package_dimensions: Default::default(),
             shippable: Default::default(),
             statement_descriptor: Default::default(),
+            tax_code: Default::default(),
             unit_label: Default::default(),
             url: Default::default(),
         }
-    }
-}
-
-/// An enum representing the possible values of an `Product`'s `type` field.
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum ProductType {
-    Good,
-    Service,
-}
-
-impl ProductType {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            ProductType::Good => "good",
-            ProductType::Service => "service",
-        }
-    }
-}
-
-impl AsRef<str> for ProductType {
-    fn as_ref(&self) -> &str {
-        self.as_str()
-    }
-}
-
-impl std::fmt::Display for ProductType {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        self.as_str().fmt(f)
     }
 }

@@ -3,14 +3,12 @@
 // ======================================
 
 use crate::config::{Client, Response};
-use crate::ids::{PlanId, PriceId, SubscriptionId, SubscriptionItemId};
+use crate::ids::{PriceId, SubscriptionId, SubscriptionItemId};
 use crate::params::{Deleted, Expand, List, Metadata, Object, Timestamp};
-use crate::resources::{Currency, Plan, Price, SubscriptionItemBillingThresholds, TaxRate};
+use crate::resources::{Currency, Price, SubscriptionItemBillingThresholds, TaxRate};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "SubscriptionItem".
-///
-/// For more details see [https://stripe.com/docs/api/subscription_items/object](https://stripe.com/docs/api/subscription_items/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SubscriptionItem {
     /// Unique identifier for the object.
@@ -30,14 +28,11 @@ pub struct SubscriptionItem {
     #[serde(default)]
     pub deleted: bool,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
     pub metadata: Metadata,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plan: Option<Plan>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<Price>,
@@ -76,7 +71,7 @@ impl SubscriptionItem {
         client.post_form("/subscription_items", &params)
     }
 
-    /// Retrieves the invoice item with the given ID.
+    /// Retrieves the subscription item with the given ID.
     pub fn retrieve(
         client: &Client,
         id: &SubscriptionItemId,
@@ -128,7 +123,7 @@ pub struct CreateSubscriptionItem<'a> {
     #[serde(skip_serializing_if = "Expand::is_empty")]
     pub expand: &'a [&'a str],
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -141,31 +136,23 @@ pub struct CreateSubscriptionItem<'a> {
     /// This allows you to manage scenarios where additional user actions are needed to pay a subscription's invoice.
     /// For example, SCA regulation may require 3DS authentication to complete payment.
     /// See the [SCA Migration Guide](https://stripe.com/docs/billing/migration/strong-customer-authentication) for Billing to learn more.
-    /// This is the default behavior.  Use `pending_if_incomplete` to update the subscription using [pending updates](https://stripe.com/docs/billing/subscriptions/pending-updates).
-    /// When you use `pending_if_incomplete` you can only pass the parameters [supported by pending updates](https://stripe.com/docs/billing/pending-updates-reference#supported-attributes).  Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's first invoice cannot be paid.
-    /// For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not create a subscription and returns an error instead.
+    /// This is the default behavior.  Use `default_incomplete` to transition the subscription to `status=past_due` when payment is required and await explicit confirmation of the invoice's payment intent.
+    /// This allows simpler management of scenarios where additional user actions are needed to pay a subscription’s invoice.
+    /// Such as failed payments, [SCA regulation](https://stripe.com/docs/billing/migration/strong-customer-authentication), or collecting a mandate for a bank debit payment method.  Use `pending_if_incomplete` to update the subscription using [pending updates](https://stripe.com/docs/billing/subscriptions/pending-updates).
+    /// When you use `pending_if_incomplete` you can only pass the parameters [supported by pending updates](https://stripe.com/docs/billing/pending-updates-reference#supported-attributes).  Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's invoice cannot be paid.
+    /// For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not update the subscription and returns an error instead.
     /// This was the default behavior for API versions prior to 2019-03-14.
     /// See the [changelog](https://stripe.com/docs/upgrades#2019-03-14) to learn more.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_behavior: Option<SubscriptionPaymentBehavior>,
 
-    /// The identifier of the plan to add to the subscription.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plan: Option<PlanId>,
-
     /// The ID of the price object.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<PriceId>,
 
-    /// Data used to generate a new price object inline.
+    /// Data used to generate a new [Price](https://stripe.com/docs/api/prices) object inline.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_data: Option<SubscriptionItemPriceData>,
-
-    /// This field has been renamed to `proration_behavior`.
-    ///
-    /// `prorate=true` can be replaced with `proration_behavior=create_prorations` and `prorate=false` can be replaced with `proration_behavior=none`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub prorate: Option<bool>,
 
     /// Determines how to handle [prorations](https://stripe.com/docs/subscriptions/billing-cycle#prorations) when the billing cycle changes (e.g., when switching plans, resetting `billing_cycle_anchor=now`, or starting a trial), or if an item's `quantity` changes.
     ///
@@ -203,10 +190,8 @@ impl<'a> CreateSubscriptionItem<'a> {
             expand: Default::default(),
             metadata: Default::default(),
             payment_behavior: Default::default(),
-            plan: Default::default(),
             price: Default::default(),
             price_data: Default::default(),
-            prorate: Default::default(),
             proration_behavior: Default::default(),
             proration_date: Default::default(),
             quantity: Default::default(),
@@ -272,7 +257,7 @@ pub struct UpdateSubscriptionItem<'a> {
     #[serde(skip_serializing_if = "Expand::is_empty")]
     pub expand: &'a [&'a str],
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -289,31 +274,25 @@ pub struct UpdateSubscriptionItem<'a> {
     /// This allows you to manage scenarios where additional user actions are needed to pay a subscription's invoice.
     /// For example, SCA regulation may require 3DS authentication to complete payment.
     /// See the [SCA Migration Guide](https://stripe.com/docs/billing/migration/strong-customer-authentication) for Billing to learn more.
-    /// This is the default behavior.  Use `pending_if_incomplete` to update the subscription using [pending updates](https://stripe.com/docs/billing/subscriptions/pending-updates).
-    /// When you use `pending_if_incomplete` you can only pass the parameters [supported by pending updates](https://stripe.com/docs/billing/pending-updates-reference#supported-attributes).  Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's first invoice cannot be paid.
-    /// For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not create a subscription and returns an error instead.
+    /// This is the default behavior.  Use `default_incomplete` to transition the subscription to `status=past_due` when payment is required and await explicit confirmation of the invoice's payment intent.
+    /// This allows simpler management of scenarios where additional user actions are needed to pay a subscription’s invoice.
+    /// Such as failed payments, [SCA regulation](https://stripe.com/docs/billing/migration/strong-customer-authentication), or collecting a mandate for a bank debit payment method.  Use `pending_if_incomplete` to update the subscription using [pending updates](https://stripe.com/docs/billing/subscriptions/pending-updates).
+    /// When you use `pending_if_incomplete` you can only pass the parameters [supported by pending updates](https://stripe.com/docs/billing/pending-updates-reference#supported-attributes).  Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's invoice cannot be paid.
+    /// For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not update the subscription and returns an error instead.
     /// This was the default behavior for API versions prior to 2019-03-14.
     /// See the [changelog](https://stripe.com/docs/upgrades#2019-03-14) to learn more.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_behavior: Option<SubscriptionPaymentBehavior>,
 
-    /// The identifier of the new plan for this subscription item.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plan: Option<PlanId>,
-
     /// The ID of the price object.
+    ///
+    /// When changing a subscription item's price, `quantity` is set to 1 unless a `quantity` parameter is provided.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<PriceId>,
 
-    /// Data used to generate a new price object inline.
+    /// Data used to generate a new [Price](https://stripe.com/docs/api/prices) object inline.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_data: Option<SubscriptionItemPriceData>,
-
-    /// This field has been renamed to `proration_behavior`.
-    ///
-    /// `prorate=true` can be replaced with `proration_behavior=create_prorations` and `prorate=false` can be replaced with `proration_behavior=none`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub prorate: Option<bool>,
 
     /// Determines how to handle [prorations](https://stripe.com/docs/subscriptions/billing-cycle#prorations) when the billing cycle changes (e.g., when switching plans, resetting `billing_cycle_anchor=now`, or starting a trial), or if an item's `quantity` changes.
     ///
@@ -349,10 +328,8 @@ impl<'a> UpdateSubscriptionItem<'a> {
             metadata: Default::default(),
             off_session: Default::default(),
             payment_behavior: Default::default(),
-            plan: Default::default(),
             price: Default::default(),
             price_data: Default::default(),
-            prorate: Default::default(),
             proration_behavior: Default::default(),
             proration_date: Default::default(),
             quantity: Default::default(),
@@ -368,6 +345,9 @@ pub struct SubscriptionItemPriceData {
     pub product: String,
 
     pub recurring: SubscriptionItemPriceDataRecurring,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_behavior: Option<SubscriptionItemPriceDataTaxBehavior>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount: Option<i64>,
@@ -417,11 +397,43 @@ impl std::fmt::Display for PlanInterval {
     }
 }
 
+/// An enum representing the possible values of an `SubscriptionItemPriceData`'s `tax_behavior` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum SubscriptionItemPriceDataTaxBehavior {
+    Exclusive,
+    Inclusive,
+    Unspecified,
+}
+
+impl SubscriptionItemPriceDataTaxBehavior {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            SubscriptionItemPriceDataTaxBehavior::Exclusive => "exclusive",
+            SubscriptionItemPriceDataTaxBehavior::Inclusive => "inclusive",
+            SubscriptionItemPriceDataTaxBehavior::Unspecified => "unspecified",
+        }
+    }
+}
+
+impl AsRef<str> for SubscriptionItemPriceDataTaxBehavior {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for SubscriptionItemPriceDataTaxBehavior {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
+}
+
 /// An enum representing the possible values of an `CreateSubscriptionItem`'s `payment_behavior` field.
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum SubscriptionPaymentBehavior {
     AllowIncomplete,
+    DefaultIncomplete,
     ErrorIfIncomplete,
     PendingIfIncomplete,
 }
@@ -430,6 +442,7 @@ impl SubscriptionPaymentBehavior {
     pub fn as_str(self) -> &'static str {
         match self {
             SubscriptionPaymentBehavior::AllowIncomplete => "allow_incomplete",
+            SubscriptionPaymentBehavior::DefaultIncomplete => "default_incomplete",
             SubscriptionPaymentBehavior::ErrorIfIncomplete => "error_if_incomplete",
             SubscriptionPaymentBehavior::PendingIfIncomplete => "pending_if_incomplete",
         }

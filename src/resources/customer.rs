@@ -5,6 +5,7 @@
 use crate::config::{Client, Response};
 use crate::ids::{
     AlipayAccountId, BankAccountId, CardId, CouponId, CustomerId, PaymentMethodId, PaymentSourceId,
+    PromotionCodeId,
 };
 use crate::params::{Deleted, Expand, Expandable, List, Metadata, Object, RangeQuery, Timestamp};
 use crate::resources::{
@@ -14,8 +15,6 @@ use crate::resources::{
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "Customer".
-///
-/// For more details see [https://stripe.com/docs/api/customers/object](https://stripe.com/docs/api/customers/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Customer {
     /// Unique identifier for the object.
@@ -54,9 +53,9 @@ pub struct Customer {
     #[serde(default)]
     pub deleted: bool,
 
-    /// When the customer's latest invoice is billed by charging automatically, delinquent is true if the invoice's latest charge is failed.
+    /// When the customer's latest invoice is billed by charging automatically, `delinquent` is `true` if the invoice's latest charge failed.
     ///
-    /// When the customer's latest invoice is billed by sending an invoice, delinquent is true if the invoice is not paid by its due date.
+    /// When the customer's latest invoice is billed by sending an invoice, `delinquent` is `true` if the invoice isn't paid by its due date.  If an invoice is marked uncollectible by [dunning](https://stripe.com/docs/billing/automatic-collection), `delinquent` doesn't get reset to `false`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub delinquent: Option<bool>,
 
@@ -85,7 +84,7 @@ pub struct Customer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub livemode: Option<bool>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
@@ -120,6 +119,9 @@ pub struct Customer {
     /// The customer's current subscriptions, if any.
     #[serde(default)]
     pub subscriptions: List<Subscription>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax: Option<CustomerTax>,
 
     /// Describes the customer's tax exemption status.
     ///
@@ -185,6 +187,33 @@ impl Object for Customer {
     fn object(&self) -> &'static str {
         "customer"
     }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CustomerTax {
+    /// Surfaces if automatic tax computation is possible given the current customer location information.
+    pub automatic_tax: CustomerTaxAutomaticTax,
+
+    /// A recent IP address of the customer used for tax reporting and tax location inference.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip_address: Option<String>,
+
+    /// The customer's location as identified by Stripe Tax.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub location: Option<CustomerTaxLocation>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CustomerTaxLocation {
+    /// The customer's country as identified by Stripe Tax.
+    pub country: String,
+
+    /// The data source used to infer the customer's location.
+    pub source: CustomerTaxLocationSource,
+
+    /// The customer's state, county, province, or region as identified by Stripe Tax.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -254,7 +283,7 @@ pub struct CreateCustomer<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invoice_settings: Option<CustomerInvoiceSettings>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -283,6 +312,13 @@ pub struct CreateCustomer<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preferred_locales: Option<Vec<String>>,
 
+    /// The API ID of a promotion code to apply to the customer.
+    ///
+    /// The customer will have a discount applied on all recurring payments.
+    /// Charges you create through the API will not have the discount.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub promotion_code: Option<PromotionCodeId>,
+
     /// The customer's shipping information.
     ///
     /// Appears on invoices emailed to this customer.
@@ -291,6 +327,10 @@ pub struct CreateCustomer<'a> {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<PaymentSourceParams>,
+
+    /// Tax details about the customer.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax: Option<CreateCustomerTax>,
 
     /// The customer's tax exemption.
     ///
@@ -320,8 +360,10 @@ impl<'a> CreateCustomer<'a> {
             payment_method: Default::default(),
             phone: Default::default(),
             preferred_locales: Default::default(),
+            promotion_code: Default::default(),
             shipping: Default::default(),
             source: Default::default(),
+            tax: Default::default(),
             tax_exempt: Default::default(),
             tax_id_data: Default::default(),
         }
@@ -334,7 +376,7 @@ pub struct ListCustomers<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created: Option<RangeQuery<Timestamp>>,
 
-    /// A filter on the list based on the customer's `email` field.
+    /// A case-sensitive filter on the list based on the customer's `email` field.
     ///
     /// The value must be a string.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -441,7 +483,7 @@ pub struct UpdateCustomer<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invoice_settings: Option<CustomerInvoiceSettings>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -467,6 +509,13 @@ pub struct UpdateCustomer<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preferred_locales: Option<Vec<String>>,
 
+    /// The API ID of a promotion code to apply to the customer.
+    ///
+    /// The customer will have a discount applied on all recurring payments.
+    /// Charges you create through the API will not have the discount.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub promotion_code: Option<PromotionCodeId>,
+
     /// The customer's shipping information.
     ///
     /// Appears on invoices emailed to this customer.
@@ -475,6 +524,10 @@ pub struct UpdateCustomer<'a> {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<PaymentSourceParams>,
+
+    /// Tax details about the customer.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax: Option<UpdateCustomerTax>,
 
     /// The customer's tax exemption.
     ///
@@ -512,12 +565,20 @@ impl<'a> UpdateCustomer<'a> {
             next_invoice_sequence: Default::default(),
             phone: Default::default(),
             preferred_locales: Default::default(),
+            promotion_code: Default::default(),
             shipping: Default::default(),
             source: Default::default(),
+            tax: Default::default(),
             tax_exempt: Default::default(),
             trial_end: Default::default(),
         }
     }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CreateCustomerTax {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip_address: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -538,6 +599,45 @@ pub struct TaxIdData {
     pub type_: TaxIdType,
 
     pub value: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UpdateCustomerTax {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip_address: Option<String>,
+}
+
+/// An enum representing the possible values of an `CustomerTax`'s `automatic_tax` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum CustomerTaxAutomaticTax {
+    Failed,
+    NotCollecting,
+    Supported,
+    UnrecognizedLocation,
+}
+
+impl CustomerTaxAutomaticTax {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            CustomerTaxAutomaticTax::Failed => "failed",
+            CustomerTaxAutomaticTax::NotCollecting => "not_collecting",
+            CustomerTaxAutomaticTax::Supported => "supported",
+            CustomerTaxAutomaticTax::UnrecognizedLocation => "unrecognized_location",
+        }
+    }
+}
+
+impl AsRef<str> for CustomerTaxAutomaticTax {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for CustomerTaxAutomaticTax {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
 }
 
 /// An enum representing the possible values of an `Customer`'s `tax_exempt` field.
@@ -602,29 +702,76 @@ impl std::fmt::Display for CustomerTaxExemptFilter {
     }
 }
 
+/// An enum representing the possible values of an `CustomerTaxLocation`'s `source` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum CustomerTaxLocationSource {
+    BillingAddress,
+    IpAddress,
+    PaymentMethod,
+    ShippingDestination,
+}
+
+impl CustomerTaxLocationSource {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            CustomerTaxLocationSource::BillingAddress => "billing_address",
+            CustomerTaxLocationSource::IpAddress => "ip_address",
+            CustomerTaxLocationSource::PaymentMethod => "payment_method",
+            CustomerTaxLocationSource::ShippingDestination => "shipping_destination",
+        }
+    }
+}
+
+impl AsRef<str> for CustomerTaxLocationSource {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for CustomerTaxLocationSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
+}
+
 /// An enum representing the possible values of an `TaxIdData`'s `type` field.
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum TaxIdType {
+    AeTrn,
     AuAbn,
+    AuArn,
     BrCnpj,
     BrCpf,
     CaBn,
+    CaGstHst,
+    CaPstBc,
+    CaPstMb,
+    CaPstSk,
     CaQst,
     ChVat,
+    ClTin,
     EsCif,
     EuVat,
+    GbVat,
     HkBr,
+    IdNpwp,
+    IlVat,
     InGst,
     JpCn,
+    JpRn,
     KrBrn,
     LiUid,
     MxRfc,
+    MyFrp,
     MyItn,
     MySst,
     NoVat,
     NzGst,
     RuInn,
+    RuKpp,
+    SaVat,
     SgGst,
     SgUen,
     ThVat,
@@ -636,25 +783,39 @@ pub enum TaxIdType {
 impl TaxIdType {
     pub fn as_str(self) -> &'static str {
         match self {
+            TaxIdType::AeTrn => "ae_trn",
             TaxIdType::AuAbn => "au_abn",
+            TaxIdType::AuArn => "au_arn",
             TaxIdType::BrCnpj => "br_cnpj",
             TaxIdType::BrCpf => "br_cpf",
             TaxIdType::CaBn => "ca_bn",
+            TaxIdType::CaGstHst => "ca_gst_hst",
+            TaxIdType::CaPstBc => "ca_pst_bc",
+            TaxIdType::CaPstMb => "ca_pst_mb",
+            TaxIdType::CaPstSk => "ca_pst_sk",
             TaxIdType::CaQst => "ca_qst",
             TaxIdType::ChVat => "ch_vat",
+            TaxIdType::ClTin => "cl_tin",
             TaxIdType::EsCif => "es_cif",
             TaxIdType::EuVat => "eu_vat",
+            TaxIdType::GbVat => "gb_vat",
             TaxIdType::HkBr => "hk_br",
+            TaxIdType::IdNpwp => "id_npwp",
+            TaxIdType::IlVat => "il_vat",
             TaxIdType::InGst => "in_gst",
             TaxIdType::JpCn => "jp_cn",
+            TaxIdType::JpRn => "jp_rn",
             TaxIdType::KrBrn => "kr_brn",
             TaxIdType::LiUid => "li_uid",
             TaxIdType::MxRfc => "mx_rfc",
+            TaxIdType::MyFrp => "my_frp",
             TaxIdType::MyItn => "my_itn",
             TaxIdType::MySst => "my_sst",
             TaxIdType::NoVat => "no_vat",
             TaxIdType::NzGst => "nz_gst",
             TaxIdType::RuInn => "ru_inn",
+            TaxIdType::RuKpp => "ru_kpp",
+            TaxIdType::SaVat => "sa_vat",
             TaxIdType::SgGst => "sg_gst",
             TaxIdType::SgUen => "sg_uen",
             TaxIdType::ThVat => "th_vat",

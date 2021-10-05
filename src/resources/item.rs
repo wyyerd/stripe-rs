@@ -4,22 +4,20 @@
 
 use crate::ids::CheckoutSessionItemId;
 use crate::params::Object;
-use crate::resources::{Currency, Price, TaxRate};
+use crate::resources::{Currency, Discount, Price, TaxRate};
 use serde_derive::{Deserialize, Serialize};
 
-/// The resource representing a Stripe "PaymentPagesCheckoutSessionLineItem".
+/// The resource representing a Stripe "LineItem".
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CheckoutSessionItem {
     /// Unique identifier for the object.
     pub id: CheckoutSessionItemId,
 
-    /// Total before any discounts or taxes is applied.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub amount_subtotal: Option<i64>,
+    /// Total before any discounts or taxes are applied.
+    pub amount_subtotal: i64,
 
     /// Total after discounts and taxes.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub amount_total: Option<i64>,
+    pub amount_total: i64,
 
     /// Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase.
     ///
@@ -32,7 +30,13 @@ pub struct CheckoutSessionItem {
     /// Defaults to product name.
     pub description: String,
 
-    pub price: Price,
+    /// The discounts applied to the line item.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discounts: Option<Vec<LineItemsDiscountAmount>>,
+
+    /// The price used to generate the line item.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub price: Option<Price>,
 
     /// The quantity of products being purchased.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -40,7 +44,7 @@ pub struct CheckoutSessionItem {
 
     /// The taxes applied to the line item.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub taxes: Option<Vec<PaymentPagesCheckoutSessionLineItemResourceLineItemTax>>,
+    pub taxes: Option<Vec<LineItemsTaxAmount>>,
 }
 
 impl Object for CheckoutSessionItem {
@@ -54,8 +58,16 @@ impl Object for CheckoutSessionItem {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct PaymentPagesCheckoutSessionLineItemResourceLineItemTax {
-    /// Amount of tax for this line item.
+pub struct LineItemsDiscountAmount {
+    /// The amount discounted.
+    pub amount: i64,
+
+    pub discount: Discount,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct LineItemsTaxAmount {
+    /// Amount of tax applied for this rate.
     pub amount: i64,
 
     pub rate: TaxRate,

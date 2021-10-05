@@ -6,7 +6,7 @@ use crate::ids::IssuingTransactionId;
 use crate::params::{Expandable, Metadata, Object, Timestamp};
 use crate::resources::{
     BalanceTransaction, Currency, IssuingAuthorization, IssuingCard, IssuingCardholder,
-    IssuingTransactionType, MerchantData,
+    IssuingDispute, IssuingTransactionType, MerchantData,
 };
 use serde_derive::{Deserialize, Serialize};
 
@@ -20,6 +20,12 @@ pub struct IssuingTransaction {
     ///
     /// This amount is in your currency and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
     pub amount: i64,
+
+    /// Detailed breakdown of amount components.
+    ///
+    /// These amounts are denominated in `currency` and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount_details: Option<IssuingTransactionAmountDetails>,
 
     /// The `Authorization` object that led to this transaction.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -46,6 +52,10 @@ pub struct IssuingTransaction {
     /// Must be a [supported currency](https://stripe.com/docs/currencies).
     pub currency: Currency,
 
+    /// If you've disputed the transaction, the ID of the dispute.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dispute: Option<Expandable<IssuingDispute>>,
+
     /// Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
     pub livemode: bool,
 
@@ -59,7 +69,7 @@ pub struct IssuingTransaction {
 
     pub merchant_data: MerchantData,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     pub metadata: Metadata,
@@ -71,6 +81,12 @@ pub struct IssuingTransaction {
     /// The nature of the transaction.
     #[serde(rename = "type")]
     pub type_: IssuingTransactionType,
+
+    /// The digital wallet used for this transaction.
+    ///
+    /// One of `apple_pay`, `google_pay`, or `samsung_pay`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wallet: Option<IssuingTransactionWallet>,
 }
 
 impl Object for IssuingTransaction {
@@ -81,6 +97,13 @@ impl Object for IssuingTransaction {
     fn object(&self) -> &'static str {
         "issuing.transaction"
     }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct IssuingTransactionAmountDetails {
+    /// The fee charged by the ATM for the cash withdrawal.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub atm_fee: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -131,7 +154,7 @@ pub struct IssuingTransactionFlightData {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IssuingTransactionFlightDataLeg {
-    /// The flight's destination airport code.
+    /// The three-letter IATA airport code of the flight's destination.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arrival_airport_code: Option<String>,
 
@@ -139,7 +162,7 @@ pub struct IssuingTransactionFlightDataLeg {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub carrier: Option<String>,
 
-    /// The airport code that the flight departed from.
+    /// The three-letter IATA airport code that the flight departed from.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub departure_airport_code: Option<String>,
 
@@ -164,7 +187,7 @@ pub struct IssuingTransactionFuelData {
     #[serde(rename = "type")]
     pub type_: String,
 
-    /// The units for `volume`.
+    /// The units for `volume_decimal`.
     ///
     /// One of `us_gallon` or `liter`.
     pub unit: String,
@@ -207,4 +230,35 @@ pub struct IssuingTransactionReceiptData {
     /// The unit cost of the item in cents.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_cost: Option<i64>,
+}
+
+/// An enum representing the possible values of an `IssuingTransaction`'s `wallet` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum IssuingTransactionWallet {
+    ApplePay,
+    GooglePay,
+    SamsungPay,
+}
+
+impl IssuingTransactionWallet {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IssuingTransactionWallet::ApplePay => "apple_pay",
+            IssuingTransactionWallet::GooglePay => "google_pay",
+            IssuingTransactionWallet::SamsungPay => "samsung_pay",
+        }
+    }
+}
+
+impl AsRef<str> for IssuingTransactionWallet {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for IssuingTransactionWallet {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
 }
