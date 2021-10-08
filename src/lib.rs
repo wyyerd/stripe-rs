@@ -51,6 +51,22 @@
 //! let charges = stripe::Charge::list(&client, params).unwrap();
 //! println!("{:?}", charges); // =>  List { data: [Charge { id: "ch_12345", .. }] }
 //! ```
+//!
+//! ### A note about async ecosystem dependencies
+//!
+//! This crate depends on `tokio=1`. Users of the `stripe-rs` async client will need
+//! all of their dependencies to be compatible with the >1.0 release of `tokio`. The
+//! `actix` framework is one notable dependency that hasn't released a stable
+//! version compatible with tokio 1.0 yet, so you will have to use one of their
+//! [beta releases](https://docs.rs/actix-web/4.0.0-beta.9/actix_web/) to make
+//! Stripe calls in an `actix` handler.
+//!
+//! Other libraries you depend on may also bring an outdated async runtime. You can
+//! track these down with `cargo tree` and search crates.io to find suitable updates:
+//!
+//! ``` sh
+//! cargo tree | grep "tokio v0"
+//! ```
 
 #![allow(clippy::map_clone)]
 // N.B. not sure if this rule will break compatibility with older rust versions we might want to support
