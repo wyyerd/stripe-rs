@@ -189,8 +189,6 @@ impl<T: DeserializeOwned + Send + 'static> List<T> {
 impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// Repeatedly queries Stripe for more data until all elements in list are fetched, using
     /// Stripe's default page size.
-    ///
-    /// Requires `feature = "blocking"`.
     #[cfg(feature = "blocking")]
     pub fn get_all(self, client: &Client) -> Response<Vec<T>> {
         let mut data = Vec::new();
@@ -206,6 +204,48 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
             }
         }
         Ok(data)
+    }
+
+    /// Get all values in this list, consuming self and paginating until all values are fetched.
+    ///
+    /// This function repeatedly queries Stripe for more data until all elements in list are fetched, using
+    /// the page size specified in params, or Stripe's default page size if none is specified.
+    ///
+    /// ```no_run
+    /// while let Some(res) = list.get_all().next().await {
+    ///     let item = res?;
+    ///     println!("GOT = {:?}", item);
+    /// }
+    /// ```
+    #[cfg(not(feature = "blocking"))]
+    pub fn get_all(self, client: &'static Client) -> impl Stream<Item = Result<T, Error>> {
+        let init = Some(self);
+        futures_util::stream::unfold(init, move |list| async move {
+            match list {
+                Some(mut list) => {
+                    let yield_val = list.data.pop();
+                    match yield_val {
+                        Some(val) => {
+                            if list.data.is_empty() {
+                                if list.has_more {
+                                    let next_list = list.next(&client).await;
+                                    match next_list {
+                                        Ok(next_list) => Some((Ok(val), Some(next_list))), // Last value of this page, onto the next page,
+                                        Err(e) => Some((Err(e), None)),
+                                    }
+                                } else {
+                                    Some((Ok(val), None)) // Final value
+                                }
+                            } else {
+                                Some((Ok(val), Some(list)))
+                            }
+                        }
+                        None => None, // We reach here if the inital List is empty
+                    }
+                }
+                None => None, // all done
+            }
+        })
     }
 
     /// Fetch an additional page of data from stripe.
