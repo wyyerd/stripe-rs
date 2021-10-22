@@ -153,7 +153,7 @@ pub struct List<T> {
 
     #[serde(default)]
     #[serde(skip)]
-    params: Option<String>,
+    pub(crate) params: Option<String>,
 }
 
 impl<T> List<T> {
@@ -210,12 +210,31 @@ impl<T: DeserializeOwned + Send + 'static> List<T> {
             }
             let resp = client.get(&url);
 
-            // TODO: Also do this for async
             #[cfg(feature = "blocking")]
             let resp: Result<List<T>, Error> = resp.map(|mut list: List<T>| {
                 list.params = params.map(|s| s.to_string());
                 list
             });
+
+            #[cfg(not(feature = "blocking"))]
+            let resp = {
+                let params_string = params.map(|p| p.to_string());
+                let resp = resp.then(move |res: Result<List<T>, _>| {
+                    let res = match res {
+                        Ok(mut list) => {
+                            if let Some(params_string) = params_string {
+                                list.params = Some(params_string);
+                            }
+                            Ok(list)
+                        }
+                        Err(e) => Err(e),
+                    };
+
+                    futures_util::future::ready(res)
+                });
+
+                Box::pin(resp)
+            };
 
             resp
         } else {
