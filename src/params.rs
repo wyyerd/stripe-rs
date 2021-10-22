@@ -245,7 +245,7 @@ impl<T: DeserializeOwned + Send + 'static> List<T> {
 
 impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// Repeatedly queries Stripe for more data until all elements in list are fetched, using
-    /// Stripe's default page size.
+    /// the page size specified in params, or Stripe's default page size if none is specified.
     #[cfg(feature = "blocking")]
     pub fn get_all(self, client: &Client) -> Response<Vec<T>> {
         let mut data = Vec::new();
