@@ -218,6 +218,9 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     ///     let item = res?;
     ///     println!("GOT = {:?}", item);
     /// }
+    ///
+    /// // Alternatively, you can collect all values into a Vec
+    /// let all_values = list.get_all(&client).collect::<Vec<_>>().await?;
     /// ```
     #[cfg(not(feature = "blocking"))]
     pub fn get_all(self, client: &'static Client) -> impl Stream<Item = Result<T, Error>> {
