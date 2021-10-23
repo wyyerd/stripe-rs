@@ -213,7 +213,8 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// the page size specified in params, or Stripe's default page size if none is specified.
     ///
     /// ```no_run
-    /// while let Some(res) = list.get_all().next().await {
+    /// let all_values = list.get_all();
+    /// while let Some(res) = all_values.next().await {
     ///     let item = res?;
     ///     println!("GOT = {:?}", item);
     /// }
