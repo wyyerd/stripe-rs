@@ -1,6 +1,7 @@
 use crate::config::{err, ok, Client, Response};
 use crate::error::Error;
 use crate::resources::ApiVersion;
+use futures_util::stream::Stream;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -230,17 +231,17 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
                                 if list.has_more {
                                     let next_list = list.next(&client).await;
                                     match next_list {
-                                        Ok(next_list) => Some((Ok(val), Some(next_list))), // Last value of this page, onto the next page,
-                                        Err(e) => Some((Err(e), None)),
+                                        Ok(next_list) => Some((Ok(val), Some(next_list))), // Last value of this page, onto the next page.
+                                        Err(e) => Some((Err(e), None)), // We ran into an error, so the last value of the stream will contain the error.
                                     }
                                 } else {
-                                    Some((Ok(val), None)) // Final value
+                                    Some((Ok(val), None)) // Final value of the stream, no errors
                                 }
                             } else {
-                                Some((Ok(val), Some(list)))
+                                Some((Ok(val), Some(list))) // Some value on this page that isn't the last value on the page
                             }
                         }
-                        None => None, // We reach here if the inital List is empty
+                        None => None, // The initial list was empty, so we're done.
                     }
                 }
                 None => None, // all done
