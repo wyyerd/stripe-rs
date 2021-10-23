@@ -249,7 +249,7 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
                                                 // Yield the first value of the next page, and set the next page (and client) as the new state.
                                                 Some((Ok(val), Some((next_list, client))))
                                             }
-                                            None => None,
+                                            None => None, // We got the next page, but it was empty, so we're done.
                                         }
                                     }
                                     Err(e) => Some((Err(e), None)), // We ran into an error. The last value of the stream will be the error.
