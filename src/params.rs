@@ -229,36 +229,38 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
 
         let client = client.clone(); // N.B. Client is send sync; cloned clients share the same pool.
         let init_state = Some((init_list, client));
-        futures_util::stream::unfold(init_state, move |state| async move {
+        futures_util::stream::unfold(init_state, |state| async move {
             match state {
                 Some(state) => {
                     let (mut list, client) = state;
                     let val = list.data.pop();
                     match val {
                         Some(val) => {
-                            if list.data.is_empty() {
-                                if list.has_more {
-                                    let next_list = list.next(&client).await;
-                                    match next_list {
-                                        Ok(mut next_list) => {
-                                            next_list.data.reverse();
-
-                                            // Yield last value of this page, the next page (and client) becomes the state
-                                            Some((Ok(val), Some((next_list, client))))
+                            Some((Ok(val), Some((list, client)))) // The hot path, we have a value.
+                        }
+                        None => {
+                            if list.has_more {
+                                let next_list = list.next(&client).await;
+                                match next_list {
+                                    Ok(mut next_list) => {
+                                        next_list.data.reverse();
+                                        match next_list.data.pop() {
+                                            Some(val) => {
+                                                // Yield the first value of the next page, and set the next page (and client) as the new state.
+                                                Some((Ok(val), Some((next_list, client))))
+                                            }
+                                            None => None,
                                         }
-                                        Err(e) => Some((Err(e), None)), // We ran into an error. The last value of the stream will be the error.
                                     }
-                                } else {
-                                    Some((Ok(val), None)) // Final value of the stream, no errors
+                                    Err(e) => Some((Err(e), None)), // We ran into an error. The last value of the stream will be the error.
                                 }
                             } else {
-                                Some((Ok(val), Some((list, client)))) // Some value on this page that isn't the last value on the page
+                                None // No more values available. We're done with no errors.
                             }
                         }
-                        None => None, // The initial list was empty, so we're done.
                     }
                 }
-                None => None, // all done
+                None => None, // all done, final value was an Error
             }
         })
     }
