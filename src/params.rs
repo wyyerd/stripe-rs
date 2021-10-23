@@ -1,6 +1,7 @@
 use crate::config::{err, ok, Client, Response};
 use crate::error::Error;
 use crate::resources::ApiVersion;
+use futures_util::future::FutureExt;
 use futures_util::stream::TryStream;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
