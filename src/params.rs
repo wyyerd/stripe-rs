@@ -224,29 +224,36 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// ```
     #[cfg(not(feature = "blocking"))]
     pub fn get_all(self, client: &Client) -> impl Stream<Item = Result<T, Error>> {
+        // We are going to be popping items off the end of the list, so we need to reverse it.
+        let mut init_list = self;
+        init_list.data.reverse();
+
         let client = client.clone(); // N.B. Client is send sync; cloned clients share the same pool.
-        let init = Some((self, client));
-        futures_util::stream::unfold(init, move |list_n_client| async move {
+        let init_state = Some((init_list, client));
+        futures_util::stream::unfold(init_state, move |list_n_client| async move {
             match list_n_client {
                 Some(list_n_client) => {
                     let (mut list, client) = list_n_client;
-                    let yield_val = list.data.pop();
-                    match yield_val {
-                        Some(yield_val) => {
+                    let val = list.data.pop();
+                    match val {
+                        Some(val) => {
                             if list.data.is_empty() {
                                 if list.has_more {
                                     let next_list = list.next(&client).await;
                                     match next_list {
-                                        Ok(next_list) => {
-                                            Some((Ok(yield_val), Some((next_list, client))))
-                                        } // Last value of this page, onto the next page.
-                                        Err(e) => Some((Err(e), None)), // We ran into an error, so the last value of the stream will contain the error.
+                                        Ok(mut next_list) => {
+                                            next_list.data.reverse();
+
+                                            // Yield last value of this page, the next page (and client) becomes the state
+                                            Some((Ok(val), Some((next_list, client))))
+                                        }
+                                        Err(e) => Some((Err(e), None)), // We ran into an error. The last value of the stream will be the error.
                                     }
                                 } else {
-                                    Some((Ok(yield_val), None)) // Final value of the stream, no errors
+                                    Some((Ok(val), None)) // Final value of the stream, no errors
                                 }
                             } else {
-                                Some((Ok(yield_val), Some((list, client)))) // Some value on this page that isn't the last value on the page
+                                Some((Ok(val), Some((list, client)))) // Some value on this page that isn't the last value on the page
                             }
                         }
                         None => None, // The initial list was empty, so we're done.
