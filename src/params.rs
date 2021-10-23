@@ -1,7 +1,7 @@
 use crate::config::{err, ok, Client, Response};
 use crate::error::Error;
 use crate::resources::ApiVersion;
-use futures_util::stream::Stream;
+use futures_util::stream::TryStream;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -214,26 +214,25 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     ///
     /// ```no_run
     /// let value_stream = list.get_all(&client);
-    /// while let Some(res) = value_stream.next().await {
-    ///     let item = res?;
-    ///     println!("GOT = {:?}", item);
+    /// while let Some(val) = value_stream.try_next().await? {
+    ///     println!("GOT = {:?}", val);
     /// }
     ///
     /// // Alternatively, you can collect all values into a Vec
-    /// let all_values = list.get_all(&client).collect::<Vec<_>>().await?;
+    /// let all_values = list.get_all(&client).try_collect::<Vec<_>>().await?;
     /// ```
     #[cfg(not(feature = "blocking"))]
-    pub fn get_all(self, client: &Client) -> impl Stream<Item = Result<T, Error>> {
+    pub fn get_all(self, client: &Client) -> impl TryStream<Ok = T, Error = Error> {
         // We are going to be popping items off the end of the list, so we need to reverse it.
         let mut init_list = self;
         init_list.data.reverse();
 
         let client = client.clone(); // N.B. Client is send sync; cloned clients share the same pool.
         let init_state = Some((init_list, client));
-        futures_util::stream::unfold(init_state, move |list_n_client| async move {
-            match list_n_client {
-                Some(list_n_client) => {
-                    let (mut list, client) = list_n_client;
+        futures_util::stream::unfold(init_state, move |state| async move {
+            match state {
+                Some(state) => {
+                    let (mut list, client) = state;
                     let val = list.data.pop();
                     match val {
                         Some(val) => {
