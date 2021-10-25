@@ -227,40 +227,26 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
         let mut init_list = self;
         init_list.data.reverse();
 
-        let client = client.clone(); // N.B. Client is send sync; cloned clients share the same pool.
-        let init_state = Some((init_list, client));
-        futures_util::stream::unfold(init_state, |state| async move {
-            match state {
-                Some(state) => {
-                    let (mut list, client) = state;
-                    let val = list.data.pop();
-                    match val {
-                        Some(val) => {
-                            Some((Ok(val), Some((list, client)))) // The hot path, we have a value.
-                        }
-                        None => {
-                            if list.has_more {
-                                let next_list = list.next(&client).await;
-                                match next_list {
-                                    Ok(mut next_list) => {
-                                        next_list.data.reverse();
-                                        match next_list.data.pop() {
-                                            Some(val) => {
-                                                // Yield the first value of the next page, and set the next page (and client) as the new state.
-                                                Some((Ok(val), Some((next_list, client))))
-                                            }
-                                            None => None, // We got the next page, but it was empty, so we're done.
-                                        }
-                                    }
-                                    Err(e) => Some((Err(e), None)), // We ran into an error. The last value of the stream will be the error.
-                                }
-                            } else {
-                                None // No more values available. We're done with no errors.
-                            }
-                        }
-                    }
+        futures_util::stream::unfold(Some((init_list, client.clone())), |state| async move {
+            let (mut list, client) = state?; // if none, we sent the last item in the list last iteration
+            let val = list.data.pop()?; // if none, the initial list was empty, so we're done.
+
+            if !list.data.is_empty() {
+                return Some((Ok(val), Some((list, client)))); // some value on this page that isn't the last value on the page
+            }
+
+            if !list.has_more {
+                return Some((Ok(val), None)); // final value of the stream, no errors
+            }
+
+            match list.next(&client).await {
+                Ok(mut next_list) => {
+                    next_list.data.reverse();
+
+                    // Yield last value of this page, the next page (and client) becomes the state
+                    Some((Ok(val), Some((next_list, client))))
                 }
-                None => None, // all done, final value was an Error
+                Err(e) => Some((Err(e), None)), // we ran into an error. the last value of the stream will be the error.
             }
         })
     }
