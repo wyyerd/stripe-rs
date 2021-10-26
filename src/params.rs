@@ -213,7 +213,9 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// the page size specified in params, or Stripe's default page size if none is specified.
     ///
     /// ```no_run
-    /// let value_stream = list.get_all(&client);
+    /// use futures::TryStreamExt;
+    ///
+    /// let value_stream = list.get_all(&client).boxed();
     /// while let Some(val) = value_stream.try_next().await? {
     ///     println!("GOT = {:?}", val);
     /// }
