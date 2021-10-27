@@ -231,7 +231,7 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
 
         futures_util::stream::unfold(Some((init_list, client.clone())), |state| async move {
             let (mut list, client) = state?; // if none, we sent the last item in the list last iteration
-            let val = list.data.pop()?; // if none, the initial list was empty, so we're done.
+            let val = list.data.pop()?; // the initial list was empty, so we're done.
 
             if !list.data.is_empty() {
                 return Some((Ok(val), Some((list, client)))); // some value on this page that isn't the last value on the page
@@ -241,7 +241,11 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
                 return Some((Ok(val), None)); // final value of the stream, no errors
             }
 
-            match list.next(&client).await {
+            // We're on the last value of this page, but there's more. We need to fetch the next page.
+            let last_id = val.cursor();
+            let resp = List::get_next(&client, &list.url, last_id.as_ref(), list.params.as_deref());
+
+            match resp.await {
                 Ok(mut next_list) => {
                     next_list.data.reverse();
 
