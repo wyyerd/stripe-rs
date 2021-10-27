@@ -56,7 +56,7 @@ impl File {
     ///
     /// The files are returned sorted by creation date, with the most recently created files appearing first.
     pub fn list(client: &Client, params: ListFiles<'_>) -> Response<List<File>> {
-        client.get_query("/files", &params)
+        client.get_list("/files", &params)
     }
 
     /// Retrieves the details of an existing file object.

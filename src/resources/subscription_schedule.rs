@@ -87,7 +87,7 @@ impl SubscriptionSchedule {
         client: &Client,
         params: ListSubscriptionSchedules<'_>,
     ) -> Response<List<SubscriptionSchedule>> {
-        client.get_query("/subscription_schedules", &params)
+        client.get_list("/subscription_schedules", &params)
     }
 
     /// Creates a new subscription schedule object.

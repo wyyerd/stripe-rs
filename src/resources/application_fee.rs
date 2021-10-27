@@ -71,7 +71,7 @@ impl ApplicationFee {
         client: &Client,
         params: ListApplicationFees<'_>,
     ) -> Response<List<ApplicationFee>> {
-        client.get_query("/application_fees", &params)
+        client.get_list("/application_fees", &params)
     }
 
     /// Retrieves the details of an application fee that your account has collected.

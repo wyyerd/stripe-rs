@@ -107,7 +107,7 @@ impl Account {
     ///
     /// If you’re not a platform, the list is empty.
     pub fn list(client: &Client, params: ListAccounts<'_>) -> Response<List<Account>> {
-        client.get_query("/accounts", &params)
+        client.get_list("/accounts", &params)
     }
 
     /// With [Connect](https://stripe.com/docs/connect), you can create Stripe accounts for your users.

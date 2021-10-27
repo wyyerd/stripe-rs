@@ -86,7 +86,7 @@ pub struct Coupon {
 impl Coupon {
     /// Returns a list of your coupons.
     pub fn list(client: &Client, params: ListCoupons<'_>) -> Response<List<Coupon>> {
-        client.get_query("/coupons", &params)
+        client.get_list("/coupons", &params)
     }
 
     /// You can create coupons easily via the [coupon management](https://dashboard.stripe.com/coupons) page of the Stripe dashboard.
