@@ -85,7 +85,7 @@ impl Sku {
     ///
     /// The SKUs are returned sorted by creation date, with the most recently created SKUs appearing first.
     pub fn list(client: &Client, params: ListSkus<'_>) -> Response<List<Sku>> {
-        client.get_query("/skus", &params)
+        client.get_list("/skus", &params)
     }
 
     /// Creates a new SKU associated with a product.

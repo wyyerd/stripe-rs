@@ -126,7 +126,7 @@ impl Order {
     ///
     /// The orders are returned sorted by creation date, with the most recently created orders appearing first.
     pub fn list(client: &Client, params: ListOrders<'_>) -> Response<List<Order>> {
-        client.get_query("/orders", &params)
+        client.get_list("/orders", &params)
     }
 
     /// Creates a new order object.

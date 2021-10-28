@@ -138,7 +138,7 @@ impl Customer {
     ///
     /// The customers are returned sorted by creation date, with the most recent customers appearing first.
     pub fn list(client: &Client, params: ListCustomers<'_>) -> Response<List<Customer>> {
-        client.get_query("/customers", &params)
+        client.get_list("/customers", &params)
     }
 
     /// Creates a new customer object.

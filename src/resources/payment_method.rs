@@ -66,7 +66,7 @@ pub struct PaymentMethod {
 impl PaymentMethod {
     /// Returns a list of PaymentMethods for a given Customer.
     pub fn list(client: &Client, params: ListPaymentMethods<'_>) -> Response<List<PaymentMethod>> {
-        client.get_query("/payment_methods", &params)
+        client.get_list("/payment_methods", &params)
     }
 
     /// Creates a PaymentMethod object.

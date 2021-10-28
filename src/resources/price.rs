@@ -109,7 +109,7 @@ pub struct Price {
 impl Price {
     /// Returns a list of your prices.
     pub fn list(client: &Client, params: ListPrices<'_>) -> Response<List<Price>> {
-        client.get_query("/prices", &params)
+        client.get_list("/prices", &params)
     }
 
     /// Creates a new price for an existing product.

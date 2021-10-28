@@ -218,7 +218,7 @@ impl Charge {
     ///
     /// The charges are returned in sorted order, with the most recent charges appearing first.
     pub fn list(client: &Client, params: ListCharges<'_>) -> Response<List<Charge>> {
-        client.get_query("/charges", &params)
+        client.get_list("/charges", &params)
     }
 
     /// To charge a credit card or other payment source, you create a `Charge` object.

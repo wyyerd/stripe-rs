@@ -1,6 +1,7 @@
 use crate::config::{err, ok, Client, Response};
 use crate::error::Error;
 use crate::resources::ApiVersion;
+use futures_util::future::FutureExt;
 use futures_util::stream::TryStream;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
@@ -150,11 +151,28 @@ pub struct List<T> {
     pub has_more: bool,
     pub total_count: Option<u64>,
     pub url: String,
+
+    #[serde(default)]
+    #[serde(skip)]
+    pub(crate) params: Option<String>,
+}
+
+impl<T> List<T> {
+    pub fn params<P: serde::Serialize>(mut self, params: &P) -> Result<Self, Error> {
+        self.params = Some(serde_qs::to_string(params).map_err(Error::serialize)?);
+        Ok(self)
+    }
 }
 
 impl<T> Default for List<T> {
     fn default() -> Self {
-        List { data: Vec::new(), has_more: false, total_count: None, url: String::new() }
+        List {
+            data: Vec::new(),
+            has_more: false,
+            total_count: None,
+            url: String::new(),
+            params: None,
+        }
     }
 }
 
@@ -165,13 +183,19 @@ impl<T: Clone> Clone for List<T> {
             has_more: self.has_more,
             total_count: self.total_count,
             url: self.url.clone(),
+            params: self.params.clone(),
         }
     }
 }
 
 impl<T: DeserializeOwned + Send + 'static> List<T> {
     /// Prefer `List::next` when possible
-    pub fn get_next(client: &Client, url: &str, last_id: &str) -> Response<List<T>> {
+    pub fn get_next(
+        client: &Client,
+        url: &str,
+        last_id: &str,
+        params: Option<&str>,
+    ) -> Response<List<T>> {
         if url.starts_with("/v1/") {
             // TODO: Maybe parse the URL?  Perhaps `List` should always parse its `url` field.
             let mut url = url.trim_start_matches("/v1/").to_string();
@@ -180,7 +204,40 @@ impl<T: DeserializeOwned + Send + 'static> List<T> {
             } else {
                 url.push_str(&format!("?starting_after={}", last_id));
             }
-            client.get(&url)
+            if let Some(params) = params {
+                if !params.is_empty() {
+                    url.push_str(&format!("&{}", params));
+                }
+            }
+            let resp = client.get(&url);
+
+            #[cfg(feature = "blocking")]
+            let resp: Result<List<T>, Error> = resp.map(|mut list: List<T>| {
+                list.params = params.map(|s| s.to_string());
+                list
+            });
+
+            #[cfg(not(feature = "blocking"))]
+            let resp = {
+                let params_string = params.map(|p| p.to_string());
+                let resp = resp.then(move |res: Result<List<T>, _>| {
+                    let res = match res {
+                        Ok(mut list) => {
+                            if let Some(params_string) = params_string {
+                                list.params = Some(params_string);
+                            }
+                            Ok(list)
+                        }
+                        Err(e) => Err(e),
+                    };
+
+                    futures_util::future::ready(res)
+                });
+
+                Box::pin(resp)
+            };
+
+            resp
         } else {
             err(Error::Unsupported("URL for fetching additional data uses different API version"))
         }
@@ -189,7 +246,7 @@ impl<T: DeserializeOwned + Send + 'static> List<T> {
 
 impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// Repeatedly queries Stripe for more data until all elements in list are fetched, using
-    /// Stripe's default page size.
+    /// the page size specified in params, or Stripe's default page size if none is specified.
     #[cfg(feature = "blocking")]
     pub fn get_all(self, client: &Client) -> Response<Vec<T>> {
         let mut data = Vec::new();
@@ -260,13 +317,14 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// Fetch an additional page of data from stripe.
     pub fn next(&self, client: &Client) -> Response<List<T>> {
         if let Some(last_id) = self.data.last().map(|d| d.cursor()) {
-            List::get_next(client, &self.url, last_id.as_ref())
+            List::get_next(client, &self.url, last_id.as_ref(), self.params.as_deref())
         } else {
             ok(List {
                 data: Vec::new(),
                 has_more: false,
                 total_count: self.total_count,
                 url: self.url.clone(),
+                params: self.params.clone(),
             })
         }
     }

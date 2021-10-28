@@ -58,7 +58,7 @@ impl TaxRate {
     ///
     /// Tax rates are returned sorted by creation date, with the most recently created tax rates appearing first.
     pub fn list(client: &Client, params: ListTaxRates<'_>) -> Response<List<TaxRate>> {
-        client.get_query("/tax_rates", &params)
+        client.get_list("/tax_rates", &params)
     }
 
     /// Creates a new tax rate.

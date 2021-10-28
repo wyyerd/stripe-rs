@@ -2,6 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 
 use futures_util::future;
+use futures_util::future::FutureExt;
 use http::header::{HeaderMap, HeaderName, HeaderValue};
 use http::request::Builder as RequestBuilder;
 use hyper::client::connect::dns::GaiResolver;
@@ -11,6 +12,7 @@ use serde::de::DeserializeOwned;
 use crate::error::{Error, ErrorResponse, RequestError};
 use crate::params::{AppInfo, Headers};
 use crate::resources::ApiVersion;
+use crate::List;
 
 #[cfg(feature = "rustls-tls")]
 use hyper_rustls::HttpsConnector;
@@ -125,6 +127,37 @@ impl Client {
             RequestBuilder::new().method("GET").uri(url).body(hyper::Body::empty()).unwrap();
         *req.headers_mut() = self.headers();
         send(&self.client, req)
+    }
+
+    /// Make a `GET` http request with url query parameters, returning a List that can be paginated
+    pub fn get_list<T: DeserializeOwned + Send + 'static, P: serde::Serialize>(
+        &self,
+        path: &str,
+        params: P,
+    ) -> Response<List<T>> {
+        let params_string = serde_qs::to_string(&params).map_err(Error::serialize);
+        let params_string = match params_string {
+            Err(e) => {
+                return err(e);
+            }
+            Ok(params_string) => params_string,
+        };
+
+        let resp: Response<List<T>> = self.get_query(path, params);
+        let resp = resp.then(move |res| {
+            let params_string = params_string; // Take ownership of params_string.
+            let res = match res {
+                Ok(mut list) => {
+                    list.params = Some(params_string);
+                    Ok(list)
+                }
+                Err(e) => Err(e),
+            };
+
+            futures_util::future::ready(res)
+        });
+
+        return Box::pin(resp);
     }
 
     /// Make a `DELETE` http request with just a path

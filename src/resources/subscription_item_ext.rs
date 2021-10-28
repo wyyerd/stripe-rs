@@ -104,7 +104,7 @@ impl UsageRecordSummary {
         // This is a bit of a strange API since params.subscription_item needs to go into the URL,
         // but the rest of the parameters (except subscription_item) need to be passed via query params.
         let url = format!("/subscription_items/{}/usage_record_summaries", &id);
-        client.get_query(&url, &params)
+        client.get_list(&url, &params)
     }
 }
 

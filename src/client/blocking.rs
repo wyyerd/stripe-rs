@@ -1,6 +1,7 @@
 use crate::client::r#async::Client as AsyncClient;
 use crate::error::Error;
 use crate::params::Headers;
+use crate::List;
 use serde::de::DeserializeOwned;
 use std::sync::{Arc};
 use std::time::Duration;
@@ -78,6 +79,20 @@ impl Client {
         params: P,
     ) -> Response<T> {
         self.send_blocking(self.inner.get_query(path, params))
+    }
+
+    /// Make a `GET` http request with url query parameters, returning a List that can be paginated
+    pub fn get_list<T: DeserializeOwned + Send + 'static, P: serde::Serialize + Clone>(
+        &self,
+        path: &str,
+        params: P,
+    ) -> Response<List<T>> {
+        let resp: Response<List<T>> = self.send_blocking(self.inner.get_query(path, params.clone()));
+
+        match resp {
+            Ok(list) => list.params(&params),
+            Err(e) => Err(e)
+        }
     }
 
     /// Make a `DELETE` http request with just a path
