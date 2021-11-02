@@ -13,4 +13,4 @@ jobs:
           toolchain: stable
       - run: |
           cargo fmt -- --check
-          Make all
+          make all
