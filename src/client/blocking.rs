@@ -2,7 +2,7 @@ use crate::client::r#async::Client as AsyncClient;
 use crate::error::Error;
 use crate::params::Headers;
 use serde::de::DeserializeOwned;
-use std::sync::{Arc};
+use std::sync::Arc;
 use std::time::Duration;
 
 /// The delay after which the blocking `Client` will assume the request has failed.

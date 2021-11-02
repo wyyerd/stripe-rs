@@ -27,4 +27,3 @@ fn main() {
         charge.id, charge.amount, charge.created, charge.status
     );
 }
-
