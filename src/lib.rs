@@ -27,7 +27,7 @@
 //! so you may frequently need to refer to the [official API docs](https://stripe.com/docs/api)
 //! to determine which fields are required for either request.
 //!
-//! ```rust,no_run
+//! ```rust,no_run,ignore
 //! /* Creating a Stripe Charge */
 //!
 //! # let client = stripe::Client::new("sk_test_YOUR_STRIPE_SECRET");
@@ -43,7 +43,7 @@
 //! println!("{:?}", charge); // =>  Charge { id: "ch_12345", amount: 1095, .. }
 //! ```
 //!
-//! ```rust,no_run
+//! ```rust,no_run,ignore
 //! /* Listing Stripe Charges */
 //!
 //! # let client = stripe::Client::new("sk_test_YOUR_STRIPE_SECRET");

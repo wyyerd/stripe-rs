@@ -1,3 +1,5 @@
+#![cfg(feature = "blocking")]
+
 mod mock;
 
 fn customer_create_and_delete(client: &stripe::Client) {

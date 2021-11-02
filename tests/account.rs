@@ -1,5 +1,6 @@
 mod mock;
 
+#[cfg(feature = "connect")]
 #[test]
 fn is_account_listable() {
     mock::with_client(|client| {
