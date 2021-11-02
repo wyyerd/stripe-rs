@@ -22,7 +22,7 @@ build-full-async: preinstall
 	cargo build --verbose --workspace --exclude binary_size
 
 test-full-async: build-full-async
-	cargo test --verbose --example create_charge
+	cargo test --verbose --example async_create_charge
 
 build-rustls-tls: preinstall
 	# Check "full/blocking"
