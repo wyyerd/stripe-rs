@@ -12,17 +12,17 @@ build-no-default-features: preinstall
 
 build-full-blocking: preinstall
 	# Check "full/blocking"
-	cargo build --verbose --workspace --exclude binary_size
+	cargo build --verbose --workspace --exclude binary_size --features blocking
 
 test-full-blocking: build-full-blocking
-	cargo test --verbose --workspace --exclude binary_size
+	cargo test --verbose --workspace --exclude binary_size --features blocking
 
 build-full-async: preinstall
 	# Check "full/async"
-	cargo build --verbose --features async --workspace --exclude binary_size
+	cargo build --verbose --workspace --exclude binary_size
 
 test-full-async: build-full-async
-	cargo test --verbose --features async --example async_create_charge
+	cargo test --verbose --example async_create_charge
 
 build-rustls-tls: preinstall
 	# Check "full/blocking"

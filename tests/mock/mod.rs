@@ -14,6 +14,9 @@ where
 {
     let keep_alive = setup();
 
+    // Sleep 100ms to ensure mock server has time to start up
+    std::thread::sleep(std::time::Duration::from_millis(100));
+
     let result = std::panic::catch_unwind(|| {
         let client = stripe::Client::from_url("http://localhost:12112", "sk_test_123");
         test(&client)

@@ -1,10 +1,12 @@
 use crate::config::{err, ok, Client, Response};
 use crate::error::Error;
 use crate::resources::ApiVersion;
-use futures_util::stream::TryStream;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+#[cfg(not(feature = "blocking"))]
+use futures_util::stream::TryStream;
 
 #[derive(Clone, Default)]
 pub struct AppInfo {
@@ -212,7 +214,7 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
     /// This function repeatedly queries Stripe for more data until all elements in list are fetched, using
     /// the page size specified in params, or Stripe's default page size if none is specified.
     ///
-    /// ```no_run
+    /// ```ignore
     /// use futures::TryStreamExt;
     ///
     /// let value_stream = list.get_all(&client).boxed();
@@ -243,7 +245,7 @@ impl<T: Paginate + DeserializeOwned + Send + 'static> List<T> {
 
             // We're on the last value of this page, but there's more. We need to fetch the next page.
             let last_id = val.cursor();
-            let resp = List::get_next(&client, &list.url, last_id.as_ref(), list.params.as_deref());
+            let resp = List::get_next(&client, &list.url, last_id.as_ref());
 
             match resp.await {
                 Ok(mut next_list) => {

@@ -432,7 +432,7 @@ impl From<PaymentMethodCardBrand> for CardBrand {
 }
 
 impl From<CardBrand> for PaymentMethodCardBrand {
-fn from(brand: CardBrand) -> Self {
+    fn from(brand: CardBrand) -> Self {
         match brand {
             CardBrand::AmericanExpress => PaymentMethodCardBrand::AmericanExpress,
             CardBrand::DinersClub => PaymentMethodCardBrand::DinersClub,

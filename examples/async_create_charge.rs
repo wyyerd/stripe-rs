@@ -1,8 +1,9 @@
+#[cfg(not(feature = "blocking"))]
 #[tokio::main]
 async fn main() {
     // Create a new client
     let secret_key = std::env::var("STRIPE_SECRET_KEY").expect("Missing STRIPE_SECRET_KEY in env");
-    let client = stripe::r#async::Client::new(secret_key);
+    let client = stripe::Client::new(secret_key);
 
     // Define a card to charge
     let card = "card_189g322eZvKYlo2CeoPw2sdy".parse().expect("expected card to be valid");
@@ -16,3 +17,7 @@ async fn main() {
     let charge = stripe::Charge::create(&client, params).await.unwrap();
     println!("{:?}", charge);
 }
+
+// Ignore this, just have this here so cargo-check is happy
+#[cfg(feature = "blocking")]
+fn main() {}

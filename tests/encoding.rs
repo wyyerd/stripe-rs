@@ -260,6 +260,7 @@ fn deserialize_customer_with_source() {
     assert!(result.is_ok(), "expected ok; was {:?}", result);
 }
 
+#[cfg(feature = "events")]
 #[test]
 fn deserialize_checkout_event() {
     use stripe::Event;
