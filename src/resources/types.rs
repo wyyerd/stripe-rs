@@ -455,7 +455,7 @@ pub struct PaymentMethodCard {
     /// Two-letter ISO code representing the country of the card.
     ///
     /// You could use this attribute to get a sense of the international breakdown of cards you've collected.
-    pub country: String,
+    pub country: Option<String>,
 
     /// Two-digit number representing the card's expiration month.
     pub exp_month: i64,
