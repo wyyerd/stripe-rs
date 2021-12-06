@@ -70,7 +70,7 @@ impl Client {
         let client = hyper::Client::builder().pool_max_idle_per_host(0).build(https);
         let mut headers = Headers::default();
         // TODO: Automatically determine the latest supported api version in codegen?
-        headers.stripe_version = Some(ApiVersion::V2019_09_09);
+        headers.stripe_version = Some(ApiVersion::V2020_03_02);
         Client {
             host,
             client,
