@@ -266,21 +266,19 @@ pub struct CreateSetupIntent<'a> {
     /// If this hash is populated, this SetupIntent will generate a single_use Mandate on success.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_use: Option<CreateSetupIntentSingleUse>,
-    
+
     /// Indicates how the payment method is intended to be used in the future.
     ///
     /// Use `on_session` if you intend to only reuse the payment method when the customer is in your checkout flow.
     ///
     /// Use `off_session` if your customer may or may not be in your checkout flow.
     /// If not provided, this value defaults to `off_session`.
-    pub usage: String
+    pub usage: String,
 }
 
 impl<'a> CreateSetupIntent<'a> {
     pub fn new() -> Self {
-        CreateSetupIntent {
-            ..Default::default()
-        }
+        CreateSetupIntent { ..Default::default() }
     }
 }
 
