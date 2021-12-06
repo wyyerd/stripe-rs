@@ -621,3 +621,9 @@ pub struct TransferDataParams {
 
     pub destination: String,
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TransferDataUpdateParams {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount: Option<i64>,
+}
