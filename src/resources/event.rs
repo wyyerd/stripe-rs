@@ -3,7 +3,6 @@ use crate::ids::EventId;
 use crate::resources::*;
 
 use chrono::Utc;
-use hmac::NewMac;
 #[cfg(feature = "webhook-events")]
 use hmac::{Hmac, Mac};
 use serde_derive::{Deserialize, Serialize};
@@ -260,11 +259,8 @@ impl Webhook {
         let mut mac =
             Hmac::<Sha256>::new_from_slice(secret.as_bytes()).map_err(|_| WebhookError::BadKey)?;
         mac.update(signed_payload.as_bytes());
-        let mac_result = mac.finalize();
-        let hex = to_hex(mac_result.into_bytes().as_ref());
-        if hex != signature.v1 {
-            return Err(WebhookError::BadSignature);
-        }
+        let sig = hex::decode(signature.v1).map_err(|_| WebhookError::BadSignature)?;
+        mac.verify_slice(sig.as_slice()).map_err(|_| WebhookError::BadSignature)?;
 
         // Get current timestamp to compare to signature timestamp
         if (self.current_timestamp - signature.t).abs() > 300 {
@@ -273,19 +269,6 @@ impl Webhook {
 
         serde_json::from_str(&payload).map_err(WebhookError::BadParse)
     }
-}
-
-// TODO: If there is a lightweight hex crate, we should just rely on that instead.
-fn to_hex(bytes: &[u8]) -> String {
-    const CHARS: &[u8] = b"0123456789abcdef";
-
-    let mut v = Vec::with_capacity(bytes.len() * 2);
-    for &byte in bytes {
-        v.push(CHARS[(byte >> 4) as usize]);
-        v.push(CHARS[(byte & 0xf) as usize]);
-    }
-
-    unsafe { String::from_utf8_unchecked(v) }
 }
 
 #[cfg(feature = "webhook-events")]

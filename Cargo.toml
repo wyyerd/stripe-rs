@@ -55,7 +55,7 @@ sigma = []
 webhook-endpoints = []
 
 # Deserialize events from webhooks
-webhook-events = ["events", "hmac", "sha2"]
+webhook-events = ["events", "hex", "hmac", "sha2"]
 events = []
 
 # Enable the blocking client
@@ -79,8 +79,9 @@ smol_str = "0.1"
 tokio = "1"
 
 # Webhook support
-hmac = { version = "0.11", optional = true }
-sha2 = { version = "0.9", optional = true }
+hex = { version = "0.4", optional = true }
+hmac = { version = "0.12", optional = true }
+sha2 = { version = "0.10", optional = true }
 
 #[[example]]
 #name = "async_create_charge"
