@@ -77,6 +77,8 @@ pub enum EventType {
     CustomerSourceCreated,
     #[serde(rename = "customer.source.deleted")]
     CustomerSourceDeleted,
+    #[serde(rename = "customer.source.expiring")]
+    CustomerSourceExpiring,
     #[serde(rename = "customer.source.updated")]
     CustomerSourceUpdated,
     #[serde(rename = "customer.subscription.created")]
@@ -137,6 +139,10 @@ pub enum EventType {
     PaymentIntentRequiresCapture,
     #[serde(rename = "payment_intent.succeeded")]
     PaymentIntentSucceeded,
+    #[serde(rename = "payment_method.attached")]
+    PaymentMethodAttached,
+    #[serde(rename = "payment_method.detached")]
+    PaymentMethodDetached,
     #[serde(rename = "payout.canceled")]
     PayoutCanceled,
     #[serde(rename = "payout.created")]
@@ -193,6 +199,7 @@ pub struct Event {
     #[serde(rename = "type")]
     pub event_type: EventType,
     pub data: EventData,
+    pub created: i64,
     // ...
 }
 
@@ -211,6 +218,7 @@ pub enum EventObject {
     ApplicationFeeRefund(ApplicationFeeRefund),
     Balance(Balance),
     BankAccount(BankAccount),
+    Card(Card),
     Charge(Charge),
     Customer(Customer),
     Dispute(Dispute),
