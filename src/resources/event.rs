@@ -1,5 +1,5 @@
 use crate::error::WebhookError;
-use crate::ids::EventId;
+use crate::ids::{AccountId, EventId};
 use crate::resources::*;
 
 use chrono::Utc;
@@ -200,6 +200,8 @@ pub struct Event {
     pub event_type: EventType,
     pub data: EventData,
     pub created: i64,
+    pub livemode: bool,
+    pub account: Option<AccountId>,
     // ...
 }
 
