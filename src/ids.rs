@@ -508,7 +508,7 @@ def_id!(OrderId, "or_");
 def_id!(OrderReturnId, "orret_");
 def_id!(MandateId: String); // TODO: Figure out what prefix this id has
 def_id!(PaymentIntentId, "pi_");
-def_id!(PaymentMethodId, "pm");
+def_id!(PaymentMethodId, "pm" | "card_");
 def_id!(
     enum PaymentSourceId {
         Account(AccountId),
