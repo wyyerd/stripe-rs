@@ -139,6 +139,8 @@ pub enum EventType {
     PaymentIntentRequiresCapture,
     #[serde(rename = "payment_intent.succeeded")]
     PaymentIntentSucceeded,
+    #[serde(rename = "payment_method.automatically_updated")]
+    PaymentMethodAutomaticallyUpdated,
     #[serde(rename = "payment_method.attached")]
     PaymentMethodAttached,
     #[serde(rename = "payment_method.detached")]
