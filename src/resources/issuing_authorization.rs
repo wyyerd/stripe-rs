@@ -6,7 +6,8 @@ use crate::ids::IssuingAuthorizationId;
 use crate::params::{Expandable, Metadata, Object, Timestamp};
 use crate::resources::{
     BalanceTransaction, Currency, IssuingAuthorizationCheck, IssuingAuthorizationMethod,
-    IssuingAuthorizationReason, IssuingCard, IssuingCardholder, IssuingTransaction, MerchantData,
+    IssuingAuthorizationReason, IssuingCard, IssuingCardholder, IssuingTransaction,
+    IssuingTransactionAmountDetails, MerchantData,
 };
 use serde_derive::{Deserialize, Serialize};
 
@@ -20,6 +21,12 @@ pub struct IssuingAuthorization {
     ///
     /// This amount is in the card's currency and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
     pub amount: i64,
+
+    /// Detailed breakdown of amount components.
+    ///
+    /// These amounts are denominated in `currency` and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount_details: Option<IssuingTransactionAmountDetails>,
 
     /// Whether the authorization has been approved.
     pub approved: bool,
@@ -62,7 +69,7 @@ pub struct IssuingAuthorization {
 
     pub merchant_data: MerchantData,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     pub metadata: Metadata,
@@ -73,9 +80,10 @@ pub struct IssuingAuthorization {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pending_request: Option<IssuingAuthorizationPendingRequest>,
 
-    /// History of every time the authorization was approved/denied (whether approved/denied by you directly or by Stripe based on your `spending_controls`).
+    /// History of every time `pending_request` was approved/denied, either by you directly or by Stripe (e.g.
     ///
-    /// If the merchant changes the authorization by performing an [incremental authorization or partial capture](https://stripe.com/docs/issuing/purchases/authorizations), you can look at this field to see the previous states of the authorization.
+    /// based on your `spending_controls`).
+    /// If the merchant changes the authorization by performing an [incremental authorization](https://stripe.com/docs/issuing/purchases/authorizations), you can look at this field to see the previous requests for the authorization.
     pub request_history: Vec<IssuingAuthorizationRequest>,
 
     /// The current status of the authorization in its lifecycle.
@@ -86,7 +94,7 @@ pub struct IssuingAuthorization {
 
     pub verification_data: IssuingAuthorizationVerificationData,
 
-    /// What, if any, digital wallet was used for this authorization.
+    /// The digital wallet used for this authorization.
     ///
     /// One of `apple_pay`, `google_pay`, or `samsung_pay`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -108,6 +116,12 @@ pub struct IssuingAuthorizationPendingRequest {
     /// The additional amount Stripe will hold if the authorization is approved, in the card's [currency](https://stripe.com/docs/api#issuing_authorization_object-pending-request-currency) and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
     pub amount: i64,
 
+    /// Detailed breakdown of amount components.
+    ///
+    /// These amounts are denominated in `currency` and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount_details: Option<IssuingTransactionAmountDetails>,
+
     /// Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase.
     ///
     /// Must be a [supported currency](https://stripe.com/docs/currencies).
@@ -127,10 +141,16 @@ pub struct IssuingAuthorizationPendingRequest {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct IssuingAuthorizationRequest {
-    /// The authorization amount in your card's currency and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
+    /// The `pending_request.amount` at the time of the request, presented in your card's currency and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
     ///
     /// Stripe held this amount from your account to fund the authorization if the request was approved.
     pub amount: i64,
+
+    /// Detailed breakdown of amount components.
+    ///
+    /// These amounts are denominated in `currency` and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount_details: Option<IssuingTransactionAmountDetails>,
 
     /// Whether this request was approved.
     pub approved: bool,
@@ -145,9 +165,7 @@ pub struct IssuingAuthorizationRequest {
     /// Must be a [supported currency](https://stripe.com/docs/currencies).
     pub currency: Currency,
 
-    /// The amount that was authorized at the time of this request.
-    ///
-    /// This amount is in the `merchant_currency` and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
+    /// The `pending_request.merchant_amount` at the time of the request, presented in the `merchant_currency` and in the [smallest currency unit](https://stripe.com/docs/currencies#zero-decimal).
     pub merchant_amount: i64,
 
     /// The currency that was collected by the merchant and presented to the cardholder for the authorization.

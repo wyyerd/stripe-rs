@@ -11,8 +11,6 @@ use crate::resources::{
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "PlatformFee".
-///
-/// For more details see [https://stripe.com/docs/api/application_fees/object](https://stripe.com/docs/api/application_fees/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ApplicationFee {
     /// Unique identifier for the object.

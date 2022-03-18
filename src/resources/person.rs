@@ -8,13 +8,12 @@ use crate::resources::{Address, Dob, File};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "Person".
-///
-/// For more details see [https://stripe.com/docs/api/persons/object](https://stripe.com/docs/api/persons/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Person {
     /// Unique identifier for the object.
     pub id: PersonId,
 
+    /// The account the person is associated with.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account: Option<String>,
 
@@ -40,44 +39,70 @@ pub struct Person {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dob: Option<Dob>,
 
+    /// The person's email address.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 
+    /// The person's first name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub first_name: Option<String>,
 
+    /// The Kana variation of the person's first name (Japan only).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub first_name_kana: Option<String>,
 
+    /// The Kanji variation of the person's first name (Japan only).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub first_name_kanji: Option<String>,
 
+    /// A list of alternate names or aliases that the person is known by.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_name_aliases: Option<Vec<String>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub future_requirements: Option<PersonFutureRequirements>,
+
+    /// The person's gender (International regulations require either "male" or "female").
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gender: Option<String>,
 
+    /// Whether the person's `id_number` was provided.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id_number_provided: Option<bool>,
 
+    /// The person's last name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_name: Option<String>,
 
+    /// The Kana variation of the person's last name (Japan only).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_name_kana: Option<String>,
 
+    /// The Kanji variation of the person's last name (Japan only).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_name_kanji: Option<String>,
 
+    /// The person's maiden name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub maiden_name: Option<String>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
     pub metadata: Metadata,
 
+    /// The country where the person is a national.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nationality: Option<String>,
+
+    /// The person's phone number.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub phone: Option<String>,
+
+    /// Indicates if the person or any of their representatives, family members, or other closely related persons, declares that they hold or have held an important public job or function, in any jurisdiction.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub political_exposure: Option<PersonPoliticalExposure>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub relationship: Option<PersonRelationship>,
@@ -85,6 +110,9 @@ pub struct Person {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub requirements: Option<PersonRequirements>,
 
+    /// Whether the last four digits of the person's Social Security number have been provided (U.S.
+    ///
+    /// only).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ssn_last_4_provided: Option<bool>,
 
@@ -153,6 +181,59 @@ pub struct PersonVerificationDocument {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PersonFutureRequirements {
+    /// Fields that are due and can be satisfied by providing the corresponding alternative fields instead.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alternatives: Option<Vec<AccountRequirementsAlternative>>,
+
+    /// Fields that need to be collected to keep the person's account enabled.
+    ///
+    /// If not collected by the account's `future_requirements[current_deadline]`, these fields will transition to the main `requirements` hash, and may immediately become `past_due`, but the account may also be given a grace period depending on the account's enablement state prior to transition.
+    pub currently_due: Vec<String>,
+
+    /// Fields that are `currently_due` and need to be collected again because validation or verification failed.
+    pub errors: Vec<AccountRequirementsError>,
+
+    /// Fields that need to be collected assuming all volume thresholds are reached.
+    ///
+    /// As they become required, they appear in `currently_due` as well, and the account's `future_requirements[current_deadline]` becomes set.
+    pub eventually_due: Vec<String>,
+
+    /// Fields that weren't collected by the account's `requirements.current_deadline`.
+    ///
+    /// These fields need to be collected to enable the person's account.
+    /// New fields will never appear here; `future_requirements.past_due` will always be a subset of `requirements.past_due`.
+    pub past_due: Vec<String>,
+
+    /// Fields that may become required depending on the results of verification or review.
+    ///
+    /// Will be an empty array unless an asynchronous verification is pending.
+    /// If verification fails, these fields move to `eventually_due` or `currently_due`.
+    pub pending_verification: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AccountRequirementsAlternative {
+    /// Fields that can be provided to satisfy all fields in `original_fields_due`.
+    pub alternative_fields_due: Vec<String>,
+
+    /// Fields that are due and can be satisfied by providing all fields in `alternative_fields_due`.
+    pub original_fields_due: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AccountRequirementsError {
+    /// The code for the type of error.
+    pub code: AccountRequirementsErrorCode,
+
+    /// An informative message that indicates the error type and provides additional details about the error.
+    pub reason: String,
+
+    /// The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
+    pub requirement: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PersonRelationship {
     /// Whether the person is a director of the account's legal entity.
     ///
@@ -188,41 +269,33 @@ pub struct PersonRelationship {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PersonRequirements {
+    /// Fields that are due and can be satisfied by providing the corresponding alternative fields instead.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alternatives: Option<Vec<AccountRequirementsAlternative>>,
+
     /// Fields that need to be collected to keep the person's account enabled.
     ///
     /// If not collected by the account's `current_deadline`, these fields appear in `past_due` as well, and the account is disabled.
     pub currently_due: Vec<String>,
 
-    /// The fields that need to be collected again because validation or verification failed for some reason.
+    /// Fields that are `currently_due` and need to be collected again because validation or verification failed.
     pub errors: Vec<AccountRequirementsError>,
 
     /// Fields that need to be collected assuming all volume thresholds are reached.
     ///
-    /// As fields are needed, they are moved to `currently_due` and the account's `current_deadline` is set.
+    /// As they become required, they appear in `currently_due` as well, and the account's `current_deadline` becomes set.
     pub eventually_due: Vec<String>,
 
     /// Fields that weren't collected by the account's `current_deadline`.
     ///
-    /// These fields need to be collected to enable payouts for the person's account.
+    /// These fields need to be collected to enable the person's account.
     pub past_due: Vec<String>,
 
     /// Fields that may become required depending on the results of verification or review.
     ///
-    /// An empty array unless an asynchronous verification is pending.
-    /// If verification fails, the fields in this array become required and move to `currently_due` or `past_due`.
+    /// Will be an empty array unless an asynchronous verification is pending.
+    /// If verification fails, these fields move to `eventually_due`, `currently_due`, or `past_due`.
     pub pending_verification: Vec<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct AccountRequirementsError {
-    /// The code for the type of error.
-    pub code: AccountRequirementsErrorCode,
-
-    /// An informative message that indicates the error type and provides additional details about the error.
-    pub reason: String,
-
-    /// The specific user onboarding requirement field (in the requirements hash) that needs to be resolved.
-    pub requirement: String,
 }
 
 /// An enum representing the possible values of an `AccountRequirementsError`'s `code` field.
@@ -248,6 +321,7 @@ pub enum AccountRequirementsErrorCode {
     VerificationDocumentIdNumberMissing,
     VerificationDocumentIncomplete,
     VerificationDocumentInvalid,
+    VerificationDocumentIssueOrExpiryDateMissing,
     VerificationDocumentManipulated,
     VerificationDocumentMissingBack,
     VerificationDocumentMissingFront,
@@ -255,6 +329,7 @@ pub enum AccountRequirementsErrorCode {
     VerificationDocumentNameMissing,
     VerificationDocumentNationalityMismatch,
     VerificationDocumentNotReadable,
+    VerificationDocumentNotSigned,
     VerificationDocumentNotUploaded,
     VerificationDocumentPhotoMismatch,
     VerificationDocumentTooLarge,
@@ -267,119 +342,61 @@ pub enum AccountRequirementsErrorCode {
     VerificationFailedKeyedMatch,
     VerificationFailedNameMatch,
     VerificationFailedOther,
+    VerificationFailedTaxIdMatch,
+    VerificationFailedTaxIdNotIssued,
+    VerificationMissingExecutives,
+    VerificationMissingOwners,
+    VerificationRequiresAdditionalMemorandumOfAssociations,
 }
 
 impl AccountRequirementsErrorCode {
     pub fn as_str(self) -> &'static str {
         match self {
-            AccountRequirementsErrorCode::InvalidAddressCityStatePostalCode => {
-                "invalid_address_city_state_postal_code"
-            }
+            AccountRequirementsErrorCode::InvalidAddressCityStatePostalCode => "invalid_address_city_state_postal_code",
             AccountRequirementsErrorCode::InvalidStreetAddress => "invalid_street_address",
             AccountRequirementsErrorCode::InvalidValueOther => "invalid_value_other",
-            AccountRequirementsErrorCode::VerificationDocumentAddressMismatch => {
-                "verification_document_address_mismatch"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentAddressMissing => {
-                "verification_document_address_missing"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentCorrupt => {
-                "verification_document_corrupt"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentCountryNotSupported => {
-                "verification_document_country_not_supported"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentDobMismatch => {
-                "verification_document_dob_mismatch"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentDuplicateType => {
-                "verification_document_duplicate_type"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentExpired => {
-                "verification_document_expired"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentFailedCopy => {
-                "verification_document_failed_copy"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentFailedGreyscale => {
-                "verification_document_failed_greyscale"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentFailedOther => {
-                "verification_document_failed_other"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentFailedTestMode => {
-                "verification_document_failed_test_mode"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentFraudulent => {
-                "verification_document_fraudulent"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentIdNumberMismatch => {
-                "verification_document_id_number_mismatch"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentIdNumberMissing => {
-                "verification_document_id_number_missing"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentIncomplete => {
-                "verification_document_incomplete"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentInvalid => {
-                "verification_document_invalid"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentManipulated => {
-                "verification_document_manipulated"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentMissingBack => {
-                "verification_document_missing_back"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentMissingFront => {
-                "verification_document_missing_front"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentNameMismatch => {
-                "verification_document_name_mismatch"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentNameMissing => {
-                "verification_document_name_missing"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentNationalityMismatch => {
-                "verification_document_nationality_mismatch"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentNotReadable => {
-                "verification_document_not_readable"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentNotUploaded => {
-                "verification_document_not_uploaded"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentPhotoMismatch => {
-                "verification_document_photo_mismatch"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentTooLarge => {
-                "verification_document_too_large"
-            }
-            AccountRequirementsErrorCode::VerificationDocumentTypeNotSupported => {
-                "verification_document_type_not_supported"
-            }
-            AccountRequirementsErrorCode::VerificationFailedAddressMatch => {
-                "verification_failed_address_match"
-            }
-            AccountRequirementsErrorCode::VerificationFailedBusinessIecNumber => {
-                "verification_failed_business_iec_number"
-            }
-            AccountRequirementsErrorCode::VerificationFailedDocumentMatch => {
-                "verification_failed_document_match"
-            }
-            AccountRequirementsErrorCode::VerificationFailedIdNumberMatch => {
-                "verification_failed_id_number_match"
-            }
-            AccountRequirementsErrorCode::VerificationFailedKeyedIdentity => {
-                "verification_failed_keyed_identity"
-            }
-            AccountRequirementsErrorCode::VerificationFailedKeyedMatch => {
-                "verification_failed_keyed_match"
-            }
-            AccountRequirementsErrorCode::VerificationFailedNameMatch => {
-                "verification_failed_name_match"
-            }
+            AccountRequirementsErrorCode::VerificationDocumentAddressMismatch => "verification_document_address_mismatch",
+            AccountRequirementsErrorCode::VerificationDocumentAddressMissing => "verification_document_address_missing",
+            AccountRequirementsErrorCode::VerificationDocumentCorrupt => "verification_document_corrupt",
+            AccountRequirementsErrorCode::VerificationDocumentCountryNotSupported => "verification_document_country_not_supported",
+            AccountRequirementsErrorCode::VerificationDocumentDobMismatch => "verification_document_dob_mismatch",
+            AccountRequirementsErrorCode::VerificationDocumentDuplicateType => "verification_document_duplicate_type",
+            AccountRequirementsErrorCode::VerificationDocumentExpired => "verification_document_expired",
+            AccountRequirementsErrorCode::VerificationDocumentFailedCopy => "verification_document_failed_copy",
+            AccountRequirementsErrorCode::VerificationDocumentFailedGreyscale => "verification_document_failed_greyscale",
+            AccountRequirementsErrorCode::VerificationDocumentFailedOther => "verification_document_failed_other",
+            AccountRequirementsErrorCode::VerificationDocumentFailedTestMode => "verification_document_failed_test_mode",
+            AccountRequirementsErrorCode::VerificationDocumentFraudulent => "verification_document_fraudulent",
+            AccountRequirementsErrorCode::VerificationDocumentIdNumberMismatch => "verification_document_id_number_mismatch",
+            AccountRequirementsErrorCode::VerificationDocumentIdNumberMissing => "verification_document_id_number_missing",
+            AccountRequirementsErrorCode::VerificationDocumentIncomplete => "verification_document_incomplete",
+            AccountRequirementsErrorCode::VerificationDocumentInvalid => "verification_document_invalid",
+            AccountRequirementsErrorCode::VerificationDocumentIssueOrExpiryDateMissing => "verification_document_issue_or_expiry_date_missing",
+            AccountRequirementsErrorCode::VerificationDocumentManipulated => "verification_document_manipulated",
+            AccountRequirementsErrorCode::VerificationDocumentMissingBack => "verification_document_missing_back",
+            AccountRequirementsErrorCode::VerificationDocumentMissingFront => "verification_document_missing_front",
+            AccountRequirementsErrorCode::VerificationDocumentNameMismatch => "verification_document_name_mismatch",
+            AccountRequirementsErrorCode::VerificationDocumentNameMissing => "verification_document_name_missing",
+            AccountRequirementsErrorCode::VerificationDocumentNationalityMismatch => "verification_document_nationality_mismatch",
+            AccountRequirementsErrorCode::VerificationDocumentNotReadable => "verification_document_not_readable",
+            AccountRequirementsErrorCode::VerificationDocumentNotSigned => "verification_document_not_signed",
+            AccountRequirementsErrorCode::VerificationDocumentNotUploaded => "verification_document_not_uploaded",
+            AccountRequirementsErrorCode::VerificationDocumentPhotoMismatch => "verification_document_photo_mismatch",
+            AccountRequirementsErrorCode::VerificationDocumentTooLarge => "verification_document_too_large",
+            AccountRequirementsErrorCode::VerificationDocumentTypeNotSupported => "verification_document_type_not_supported",
+            AccountRequirementsErrorCode::VerificationFailedAddressMatch => "verification_failed_address_match",
+            AccountRequirementsErrorCode::VerificationFailedBusinessIecNumber => "verification_failed_business_iec_number",
+            AccountRequirementsErrorCode::VerificationFailedDocumentMatch => "verification_failed_document_match",
+            AccountRequirementsErrorCode::VerificationFailedIdNumberMatch => "verification_failed_id_number_match",
+            AccountRequirementsErrorCode::VerificationFailedKeyedIdentity => "verification_failed_keyed_identity",
+            AccountRequirementsErrorCode::VerificationFailedKeyedMatch => "verification_failed_keyed_match",
+            AccountRequirementsErrorCode::VerificationFailedNameMatch => "verification_failed_name_match",
             AccountRequirementsErrorCode::VerificationFailedOther => "verification_failed_other",
+            AccountRequirementsErrorCode::VerificationFailedTaxIdMatch => "verification_failed_tax_id_match",
+            AccountRequirementsErrorCode::VerificationFailedTaxIdNotIssued => "verification_failed_tax_id_not_issued",
+            AccountRequirementsErrorCode::VerificationMissingExecutives => "verification_missing_executives",
+            AccountRequirementsErrorCode::VerificationMissingOwners => "verification_missing_owners",
+            AccountRequirementsErrorCode::VerificationRequiresAdditionalMemorandumOfAssociations => "verification_requires_additional_memorandum_of_associations",
         }
     }
 }
@@ -391,6 +408,35 @@ impl AsRef<str> for AccountRequirementsErrorCode {
 }
 
 impl std::fmt::Display for AccountRequirementsErrorCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
+}
+
+/// An enum representing the possible values of an `Person`'s `political_exposure` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum PersonPoliticalExposure {
+    Existing,
+    None,
+}
+
+impl PersonPoliticalExposure {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            PersonPoliticalExposure::Existing => "existing",
+            PersonPoliticalExposure::None => "none",
+        }
+    }
+}
+
+impl AsRef<str> for PersonPoliticalExposure {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for PersonPoliticalExposure {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         self.as_str().fmt(f)
     }

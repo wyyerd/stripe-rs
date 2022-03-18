@@ -5,12 +5,12 @@
 use crate::config::{Client, Response};
 use crate::ids::{CustomerId, InvoiceId, InvoiceItemId, PriceId, SubscriptionId};
 use crate::params::{Deleted, Expand, Expandable, List, Metadata, Object, RangeQuery, Timestamp};
-use crate::resources::{Currency, Customer, Invoice, Period, Plan, Price, Subscription, TaxRate};
+use crate::resources::{
+    Currency, Customer, Discount, Invoice, Period, Price, Subscription, TaxRate,
+};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "InvoiceItem".
-///
-/// For more details see [https://stripe.com/docs/api/invoiceitems/object](https://stripe.com/docs/api/invoiceitems/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct InvoiceItem {
     /// Unique identifier for the object.
@@ -54,6 +54,13 @@ pub struct InvoiceItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub discountable: Option<bool>,
 
+    /// The discounts which apply to the invoice item.
+    ///
+    /// Item discounts are applied before invoice discounts.
+    /// Use `expand[]=discounts` to expand each discount.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discounts: Option<Vec<Expandable<Discount>>>,
+
     /// The ID of the invoice this invoice item belongs to.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invoice: Option<Expandable<Invoice>>,
@@ -62,7 +69,7 @@ pub struct InvoiceItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub livemode: Option<bool>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
@@ -70,10 +77,6 @@ pub struct InvoiceItem {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub period: Option<Period>,
-
-    /// If the invoice item is a proration, the plan of the subscription that the proration was computed for.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plan: Option<Plan>,
 
     /// The price of the invoice item.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -103,7 +106,7 @@ pub struct InvoiceItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tax_rates: Option<Vec<TaxRate>>,
 
-    /// Unit Amount (in the `currency` specified) of the invoice item.
+    /// Unit amount (in the `currency` specified) of the invoice item.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount: Option<i64>,
 
@@ -120,7 +123,7 @@ impl InvoiceItem {
         client.get_query("/invoiceitems", &params)
     }
 
-    /// Creates an item to be added to a draft invoice.
+    /// Creates an item to be added to a draft invoice (up to 250 items per invoice).
     ///
     /// If no invoice is specified, the item will be on the next invoice created for the customer specified.
     pub fn create(client: &Client, params: CreateInvoiceItem<'_>) -> Response<InvoiceItem> {
@@ -164,7 +167,7 @@ impl Object for InvoiceItem {
 /// The parameters for `InvoiceItem::create`.
 #[derive(Clone, Debug, Serialize)]
 pub struct CreateInvoiceItem<'a> {
-    /// The integer amount in **%s** of the charge to be applied to the upcoming invoice.
+    /// The integer amount in %s of the charge to be applied to the upcoming invoice.
     ///
     /// Passing in a negative `amount` will reduce the `amount_due` on the invoice.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -191,6 +194,10 @@ pub struct CreateInvoiceItem<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub discountable: Option<bool>,
 
+    /// The coupons to redeem into discounts for the invoice item or invoice line item.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discounts: Option<Vec<CreateInvoiceItemDiscounts>>,
+
     /// Specifies which fields in the response should be expanded.
     #[serde(skip_serializing_if = "Expand::is_empty")]
     pub expand: &'a [&'a str],
@@ -199,11 +206,11 @@ pub struct CreateInvoiceItem<'a> {
     ///
     /// When left blank, the invoice item will be added to the next upcoming scheduled invoice.
     /// This is useful when adding invoice items in response to an invoice.created webhook.
-    /// You can only add invoice items to draft invoices.
+    /// You can only add invoice items to draft invoices and there is a maximum of 250 items per invoice.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invoice: Option<InvoiceId>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -219,7 +226,7 @@ pub struct CreateInvoiceItem<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<PriceId>,
 
-    /// Data used to generate a new price object inline.
+    /// Data used to generate a new [Price](https://stripe.com/docs/api/prices) object inline.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_data: Option<InvoiceItemPriceData>,
 
@@ -243,14 +250,14 @@ pub struct CreateInvoiceItem<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tax_rates: Option<Vec<String>>,
 
-    /// The integer unit amount in **%s** of the charge to be applied to the upcoming invoice.
+    /// The integer unit amount in %s of the charge to be applied to the upcoming invoice.
     ///
     /// This `unit_amount` will be multiplied by the quantity to get the full amount.
     /// Passing in a negative `unit_amount` will reduce the `amount_due` on the invoice.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount: Option<i64>,
 
-    /// Same as `unit_amount`, but accepts a decimal value with at most 12 decimal places.
+    /// Same as `unit_amount`, but accepts a decimal value in %s with at most 12 decimal places.
     ///
     /// Only one of `unit_amount` and `unit_amount_decimal` can be set.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -265,6 +272,7 @@ impl<'a> CreateInvoiceItem<'a> {
             customer,
             description: Default::default(),
             discountable: Default::default(),
+            discounts: Default::default(),
             expand: Default::default(),
             invoice: Default::default(),
             metadata: Default::default(),
@@ -349,7 +357,7 @@ impl<'a> ListInvoiceItems<'a> {
 /// The parameters for `InvoiceItem::update`.
 #[derive(Clone, Debug, Serialize, Default)]
 pub struct UpdateInvoiceItem<'a> {
-    /// The integer amount in **%s** of the charge to be applied to the upcoming invoice.
+    /// The integer amount in %s of the charge to be applied to the upcoming invoice.
     ///
     /// If you want to apply a credit to the customer's account, pass a negative amount.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -368,11 +376,18 @@ pub struct UpdateInvoiceItem<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub discountable: Option<bool>,
 
+    /// The coupons & existing discounts which apply to the invoice item or invoice line item.
+    ///
+    /// Item discounts are applied before invoice discounts.
+    /// Pass an empty string to remove previously-defined discounts.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discounts: Option<Vec<UpdateInvoiceItemDiscounts>>,
+
     /// Specifies which fields in the response should be expanded.
     #[serde(skip_serializing_if = "Expand::is_empty")]
     pub expand: &'a [&'a str],
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -388,7 +403,7 @@ pub struct UpdateInvoiceItem<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price: Option<PriceId>,
 
-    /// Data used to generate a new price object inline.
+    /// Data used to generate a new [Price](https://stripe.com/docs/api/prices) object inline.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub price_data: Option<InvoiceItemPriceData>,
 
@@ -405,14 +420,14 @@ pub struct UpdateInvoiceItem<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tax_rates: Option<Vec<String>>,
 
-    /// The integer unit amount in **%s** of the charge to be applied to the upcoming invoice.
+    /// The integer unit amount in %s of the charge to be applied to the upcoming invoice.
     ///
     /// This unit_amount will be multiplied by the quantity to get the full amount.
     /// If you want to apply a credit to the customer's account, pass a negative unit_amount.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount: Option<i64>,
 
-    /// Same as `unit_amount`, but accepts a decimal value with at most 12 decimal places.
+    /// Same as `unit_amount`, but accepts a decimal value in %s with at most 12 decimal places.
     ///
     /// Only one of `unit_amount` and `unit_amount_decimal` can be set.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -425,6 +440,7 @@ impl<'a> UpdateInvoiceItem<'a> {
             amount: Default::default(),
             description: Default::default(),
             discountable: Default::default(),
+            discounts: Default::default(),
             expand: Default::default(),
             metadata: Default::default(),
             period: Default::default(),
@@ -439,14 +455,66 @@ impl<'a> UpdateInvoiceItem<'a> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CreateInvoiceItemDiscounts {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub coupon: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discount: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct InvoiceItemPriceData {
     pub currency: Currency,
 
     pub product: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_behavior: Option<InvoiceItemPriceDataTaxBehavior>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount: Option<i64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount_decimal: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UpdateInvoiceItemDiscounts {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub coupon: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discount: Option<String>,
+}
+
+/// An enum representing the possible values of an `InvoiceItemPriceData`'s `tax_behavior` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum InvoiceItemPriceDataTaxBehavior {
+    Exclusive,
+    Inclusive,
+    Unspecified,
+}
+
+impl InvoiceItemPriceDataTaxBehavior {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            InvoiceItemPriceDataTaxBehavior::Exclusive => "exclusive",
+            InvoiceItemPriceDataTaxBehavior::Inclusive => "inclusive",
+            InvoiceItemPriceDataTaxBehavior::Unspecified => "unspecified",
+        }
+    }
+}
+
+impl AsRef<str> for InvoiceItemPriceDataTaxBehavior {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for InvoiceItemPriceDataTaxBehavior {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
 }

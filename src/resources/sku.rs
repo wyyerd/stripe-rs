@@ -8,9 +8,7 @@ use crate::params::{Deleted, Expand, Expandable, IdOrCreate, List, Metadata, Obj
 use crate::resources::{CreateProduct, Currency, PackageDimensions, Product};
 use serde_derive::{Deserialize, Serialize};
 
-/// The resource representing a Stripe "SKU".
-///
-/// For more details see [https://stripe.com/docs/api/skus/object](https://stripe.com/docs/api/skus/object).
+/// The resource representing a Stripe "Sku".
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Sku {
     /// Unique identifier for the object.
@@ -47,13 +45,13 @@ pub struct Sku {
     pub image: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub inventory: Option<Inventory>,
+    pub inventory: Option<SkuInventory>,
 
     /// Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub livemode: Option<bool>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
@@ -127,7 +125,7 @@ impl Object for Sku {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Inventory {
+pub struct SkuInventory {
     /// The count of inventory available.
     ///
     /// Will be present if and only if `type` is `finite`.
@@ -185,9 +183,9 @@ pub struct CreateSku<'a> {
 
     /// Description of the SKU's inventory.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub inventory: Option<Inventory>,
+    pub inventory: Option<SkuInventory>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -211,7 +209,7 @@ pub struct CreateSku<'a> {
 impl<'a> CreateSku<'a> {
     pub fn new(
         currency: Currency,
-        inventory: Option<Inventory>,
+        inventory: Option<SkuInventory>,
         price: i64,
         product: IdOrCreate<'a, CreateProduct<'a>>,
     ) -> Self {
@@ -331,9 +329,9 @@ pub struct UpdateSku<'a> {
 
     /// Description of the SKU's inventory.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub inventory: Option<Inventory>,
+    pub inventory: Option<SkuInventory>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.

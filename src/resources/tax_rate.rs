@@ -8,8 +8,6 @@ use crate::params::{Expand, List, Metadata, Object, RangeQuery, Timestamp};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "TaxRate".
-///
-/// For more details see [https://stripe.com/docs/api/tax_rates/object](https://stripe.com/docs/api/tax_rates/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TaxRate {
     /// Unique identifier for the object.
@@ -17,8 +15,12 @@ pub struct TaxRate {
 
     /// Defaults to `true`.
     ///
-    /// When set to `false`, this tax rate cannot be applied to objects in the API, but will still be applied to subscriptions and invoices that already have it set.
+    /// When set to `false`, this tax rate cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
     pub active: bool,
+
+    /// Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
 
     /// Time at which the object was created.
     ///
@@ -38,19 +40,33 @@ pub struct TaxRate {
     pub inclusive: bool,
 
     /// The jurisdiction for the tax rate.
+    ///
+    /// You can use this label field for tax reporting purposes.
+    /// It also appears on your customer’s invoice.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jurisdiction: Option<String>,
 
     /// Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
     pub livemode: bool,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
+    #[serde(default)]
     pub metadata: Metadata,
 
     /// This represents the tax rate percent out of 100.
     pub percentage: f64,
+
+    /// [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2:US), without country prefix.
+    ///
+    /// For example, "NY" for New York, United States.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<String>,
+
+    /// The high-level tax type, such as `vat` or `sales_tax`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_type: Option<TaxRateTaxType>,
 }
 
 impl TaxRate {
@@ -90,11 +106,15 @@ impl Object for TaxRate {
 /// The parameters for `TaxRate::create`.
 #[derive(Clone, Debug, Serialize)]
 pub struct CreateTaxRate<'a> {
-    /// Flag determining whether the tax rate is active or inactive.
+    /// Flag determining whether the tax rate is active or inactive (archived).
     ///
-    /// Inactive tax rates continue to work where they are currently applied however they cannot be used for new applications.
+    /// Inactive tax rates cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
+
+    /// Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<&'a str>,
 
     /// An arbitrary string attached to the tax rate for your internal use only.
     ///
@@ -113,10 +133,13 @@ pub struct CreateTaxRate<'a> {
     pub inclusive: bool,
 
     /// The jurisdiction for the tax rate.
+    ///
+    /// You can use this label field for tax reporting purposes.
+    /// It also appears on your customer’s invoice.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jurisdiction: Option<&'a str>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -126,12 +149,23 @@ pub struct CreateTaxRate<'a> {
 
     /// This represents the tax rate percent out of 100.
     pub percentage: f64,
+
+    /// [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2:US), without country prefix.
+    ///
+    /// For example, "NY" for New York, United States.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<&'a str>,
+
+    /// The high-level tax type, such as `vat` or `sales_tax`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_type: Option<TaxRateTaxType>,
 }
 
 impl<'a> CreateTaxRate<'a> {
     pub fn new(display_name: &'a str, percentage: f64) -> Self {
         CreateTaxRate {
             active: Default::default(),
+            country: Default::default(),
             description: Default::default(),
             display_name,
             expand: Default::default(),
@@ -139,6 +173,8 @@ impl<'a> CreateTaxRate<'a> {
             jurisdiction: Default::default(),
             metadata: Default::default(),
             percentage,
+            state: Default::default(),
+            tax_type: Default::default(),
         }
     }
 }
@@ -146,7 +182,7 @@ impl<'a> CreateTaxRate<'a> {
 /// The parameters for `TaxRate::list`.
 #[derive(Clone, Debug, Serialize, Default)]
 pub struct ListTaxRates<'a> {
-    /// Optional flag to filter by tax rates that are either active or not active (archived).
+    /// Optional flag to filter by tax rates that are either active or inactive (archived).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
 
@@ -200,11 +236,15 @@ impl<'a> ListTaxRates<'a> {
 /// The parameters for `TaxRate::update`.
 #[derive(Clone, Debug, Serialize, Default)]
 pub struct UpdateTaxRate<'a> {
-    /// Flag determining whether the tax rate is active or inactive.
+    /// Flag determining whether the tax rate is active or inactive (archived).
     ///
-    /// Inactive tax rates continue to work where they are currently applied however they cannot be used for new applications.
+    /// Inactive tax rates cannot be used with new applications or Checkout Sessions, but will still work for subscriptions and invoices that already have it set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub active: Option<bool>,
+
+    /// Two-letter country code ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<&'a str>,
 
     /// An arbitrary string attached to the tax rate for your internal use only.
     ///
@@ -221,27 +261,82 @@ pub struct UpdateTaxRate<'a> {
     pub expand: &'a [&'a str],
 
     /// The jurisdiction for the tax rate.
+    ///
+    /// You can use this label field for tax reporting purposes.
+    /// It also appears on your customer’s invoice.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jurisdiction: Option<&'a str>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
     /// All keys can be unset by posting an empty value to `metadata`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
+
+    /// [ISO 3166-2 subdivision code](https://en.wikipedia.org/wiki/ISO_3166-2:US), without country prefix.
+    ///
+    /// For example, "NY" for New York, United States.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<&'a str>,
+
+    /// The high-level tax type, such as `vat` or `sales_tax`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_type: Option<TaxRateTaxType>,
 }
 
 impl<'a> UpdateTaxRate<'a> {
     pub fn new() -> Self {
         UpdateTaxRate {
             active: Default::default(),
+            country: Default::default(),
             description: Default::default(),
             display_name: Default::default(),
             expand: Default::default(),
             jurisdiction: Default::default(),
             metadata: Default::default(),
+            state: Default::default(),
+            tax_type: Default::default(),
         }
+    }
+}
+
+/// An enum representing the possible values of an `TaxRate`'s `tax_type` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum TaxRateTaxType {
+    Gst,
+    Hst,
+    Pst,
+    Qst,
+    Rst,
+    SalesTax,
+    Vat,
+}
+
+impl TaxRateTaxType {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            TaxRateTaxType::Gst => "gst",
+            TaxRateTaxType::Hst => "hst",
+            TaxRateTaxType::Pst => "pst",
+            TaxRateTaxType::Qst => "qst",
+            TaxRateTaxType::Rst => "rst",
+            TaxRateTaxType::SalesTax => "sales_tax",
+            TaxRateTaxType::Vat => "vat",
+        }
+    }
+}
+
+impl AsRef<str> for TaxRateTaxType {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for TaxRateTaxType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
     }
 }

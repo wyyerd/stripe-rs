@@ -12,8 +12,6 @@ use crate::resources::{
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "Source".
-///
-/// For more details see [https://stripe.com/docs/api/sources/object](https://stripe.com/docs/api/sources/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Source {
     /// Unique identifier for the object.
@@ -24,6 +22,9 @@ pub struct Source {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ach_debit: Option<SourceTypeAchDebit>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub acss_debit: Option<SourceTypeAcssDebit>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alipay: Option<SourceTypeAlipay>,
@@ -93,7 +94,7 @@ pub struct Source {
     /// Has the value `true` if the object exists in live mode or the value `false` if the object exists in test mode.
     pub livemode: bool,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
@@ -237,6 +238,12 @@ pub struct SourceOrderItem {
     /// Human-readable description for this order item.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+
+    /// The ID of the associated object for this line item.
+    ///
+    /// Expandable if not null (e.g., expandable to a SKU).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
 
     /// The quantity of this order item.
     ///
@@ -397,6 +404,39 @@ pub struct SourceTypeAchDebit {
     #[serde(rename = "type")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SourceTypeAcssDebit {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bank_address_city: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bank_address_line_1: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bank_address_line_2: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bank_address_postal_code: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bank_name: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fingerprint: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last4: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub routing_number: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -670,6 +710,9 @@ pub struct SourceTypeKlarna {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_url: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shipping_delay: Option<i64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub shipping_first_name: Option<String>,
@@ -955,7 +998,7 @@ pub struct UpdateSource<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mandate: Option<SourceMandateParams>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -1424,6 +1467,7 @@ impl std::fmt::Display for SourceRefundNotificationMethod {
 pub enum SourceType {
     AchCreditTransfer,
     AchDebit,
+    AcssDebit,
     Alipay,
     AuBecsDebit,
     Bancontact,
@@ -1446,6 +1490,7 @@ impl SourceType {
         match self {
             SourceType::AchCreditTransfer => "ach_credit_transfer",
             SourceType::AchDebit => "ach_debit",
+            SourceType::AcssDebit => "acss_debit",
             SourceType::Alipay => "alipay",
             SourceType::AuBecsDebit => "au_becs_debit",
             SourceType::Bancontact => "bancontact",

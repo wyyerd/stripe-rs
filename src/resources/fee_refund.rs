@@ -8,8 +8,6 @@ use crate::resources::{ApplicationFee, BalanceTransaction, Currency};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "FeeRefund".
-///
-/// For more details see [https://stripe.com/docs/api/fee_refunds/object](https://stripe.com/docs/api/fee_refunds/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ApplicationFeeRefund {
     /// Unique identifier for the object.
@@ -35,9 +33,10 @@ pub struct ApplicationFeeRefund {
     /// ID of the application fee that was refunded.
     pub fee: Expandable<ApplicationFee>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
+    #[serde(default)]
     pub metadata: Metadata,
 }
 

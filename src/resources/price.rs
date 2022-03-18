@@ -11,8 +11,6 @@ use crate::resources::{CreateProduct, Currency, Product, UpTo};
 use serde_derive::{Deserialize, Serialize};
 
 /// The resource representing a Stripe "Price".
-///
-/// For more details see [https://stripe.com/docs/api/prices/object](https://stripe.com/docs/api/prices/object).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Price {
     /// Unique identifier for the object.
@@ -54,13 +52,13 @@ pub struct Price {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lookup_key: Option<String>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     #[serde(default)]
     pub metadata: Metadata,
 
-    /// A brief description of the plan, hidden from customers.
+    /// A brief description of the price, hidden from customers.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nickname: Option<String>,
 
@@ -71,6 +69,13 @@ pub struct Price {
     /// The recurring components of a price such as `interval` and `usage_type`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recurring: Option<Recurring>,
+
+    /// Specifies whether the price is considered inclusive of taxes or exclusive of taxes.
+    ///
+    /// One of `inclusive`, `exclusive`, or `unspecified`.
+    /// Once specified as either `inclusive` or `exclusive`, it cannot be changed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_behavior: Option<PriceTaxBehavior>,
 
     /// Each element represents a pricing tier.
     ///
@@ -98,10 +103,14 @@ pub struct Price {
     pub type_: Option<PriceType>,
 
     /// The unit amount in %s to be charged, represented as a whole integer if possible.
+    ///
+    /// Only set if `billing_scheme=per_unit`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount: Option<i64>,
 
     /// The unit amount in %s to be charged, represented as a decimal string with at most 12 decimal places.
+    ///
+    /// Only set if `billing_scheme=per_unit`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount_decimal: Option<String>,
 }
@@ -184,10 +193,6 @@ pub struct Recurring {
     /// For example, `interval=month` and `interval_count=3` bills every 3 months.
     pub interval_count: u64,
 
-    /// Default number of trial days when subscribing a customer to this price using [`trial_from_plan=true`](https://stripe.com/docs/api#create_subscription-trial_from_plan).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_period_days: Option<u32>,
-
     /// Configures how the quantity per period should be determined.
     ///
     /// Can be either `metered` or `licensed`.
@@ -209,7 +214,7 @@ pub struct TransformQuantity {
 /// The parameters for `Price::create`.
 #[derive(Clone, Debug, Serialize)]
 pub struct CreatePrice<'a> {
-    /// Whether the price is currently active.
+    /// Whether the price can be used for new purchases.
     ///
     /// Defaults to `true`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -236,7 +241,7 @@ pub struct CreatePrice<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lookup_key: Option<&'a str>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -259,6 +264,13 @@ pub struct CreatePrice<'a> {
     /// The recurring components of a price such as `interval` and `usage_type`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recurring: Option<CreatePriceRecurring>,
+
+    /// Specifies whether the price is considered inclusive of taxes or exclusive of taxes.
+    ///
+    /// One of `inclusive`, `exclusive`, or `unspecified`.
+    /// Once specified as either `inclusive` or `exclusive`, it cannot be changed.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_behavior: Option<PriceTaxBehavior>,
 
     /// Each element represents a pricing tier.
     ///
@@ -287,7 +299,7 @@ pub struct CreatePrice<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_amount: Option<i64>,
 
-    /// Same as `unit_amount`, but accepts a decimal value with at most 12 decimal places.
+    /// Same as `unit_amount`, but accepts a decimal value in %s with at most 12 decimal places.
     ///
     /// Only one of `unit_amount` and `unit_amount_decimal` can be set.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -307,6 +319,7 @@ impl<'a> CreatePrice<'a> {
             product: Default::default(),
             product_data: Default::default(),
             recurring: Default::default(),
+            tax_behavior: Default::default(),
             tiers: Default::default(),
             tiers_mode: Default::default(),
             transfer_lookup_key: Default::default(),
@@ -397,7 +410,7 @@ impl<'a> ListPrices<'a> {
 /// The parameters for `Price::update`.
 #[derive(Clone, Debug, Serialize, Default)]
 pub struct UpdatePrice<'a> {
-    /// Whether the price is currently active.
+    /// Whether the price can be used for new purchases.
     ///
     /// Defaults to `true`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -411,7 +424,7 @@ pub struct UpdatePrice<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lookup_key: Option<&'a str>,
 
-    /// Set of key-value pairs that you can attach to an object.
+    /// Set of [key-value pairs](https://stripe.com/docs/api/metadata) that you can attach to an object.
     ///
     /// This can be useful for storing additional information about the object in a structured format.
     /// Individual keys can be unset by posting an empty value to them.
@@ -423,9 +436,12 @@ pub struct UpdatePrice<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nickname: Option<&'a str>,
 
-    /// The recurring components of a price such as `interval` and `usage_type`.
+    /// Specifies whether the price is considered inclusive of taxes or exclusive of taxes.
+    ///
+    /// One of `inclusive`, `exclusive`, or `unspecified`.
+    /// Once specified as either `inclusive` or `exclusive`, it cannot be changed.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub recurring: Option<UpdatePriceRecurring>,
+    pub tax_behavior: Option<PriceTaxBehavior>,
 
     /// If set to true, will atomically remove the lookup key from the existing price, and assign it to this price.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -440,7 +456,7 @@ impl<'a> UpdatePrice<'a> {
             lookup_key: Default::default(),
             metadata: Default::default(),
             nickname: Default::default(),
-            recurring: Default::default(),
+            tax_behavior: Default::default(),
             transfer_lookup_key: Default::default(),
         }
     }
@@ -463,6 +479,9 @@ pub struct CreatePriceProductData {
     pub statement_descriptor: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub tax_code: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unit_label: Option<String>,
 }
 
@@ -475,9 +494,6 @@ pub struct CreatePriceRecurring {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub interval_count: Option<u64>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_period_days: Option<u32>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub usage_type: Option<CreatePriceRecurringUsageType>,
@@ -514,12 +530,6 @@ pub struct ListPricesRecurring {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub usage_type: Option<ListPricesRecurringUsageType>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct UpdatePriceRecurring {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_period_days: Option<u32>,
 }
 
 /// An enum representing the possible values of an `CreatePriceRecurring`'s `aggregate_usage` field.
@@ -732,6 +742,37 @@ impl AsRef<str> for PriceBillingScheme {
 }
 
 impl std::fmt::Display for PriceBillingScheme {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
+}
+
+/// An enum representing the possible values of an `Price`'s `tax_behavior` field.
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum PriceTaxBehavior {
+    Exclusive,
+    Inclusive,
+    Unspecified,
+}
+
+impl PriceTaxBehavior {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            PriceTaxBehavior::Exclusive => "exclusive",
+            PriceTaxBehavior::Inclusive => "inclusive",
+            PriceTaxBehavior::Unspecified => "unspecified",
+        }
+    }
+}
+
+impl AsRef<str> for PriceTaxBehavior {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for PriceTaxBehavior {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         self.as_str().fmt(f)
     }

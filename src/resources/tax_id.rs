@@ -35,7 +35,7 @@ pub struct TaxId {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub livemode: Option<bool>,
 
-    /// Type of the tax ID, one of `au_abn`, `br_cnpj`, `br_cpf`, `ca_bn`, `ca_qst`, `ch_vat`, `es_cif`, `eu_vat`, `hk_br`, `in_gst`, `jp_cn`, `kr_brn`, `li_uid`, `mx_rfc`, `my_itn`, `my_sst`, `no_vat`, `nz_gst`, `ru_inn`, `sg_gst`, `sg_uen`, `th_vat`, `tw_vat`, `us_ein`, or `za_vat`.
+    /// Type of the tax ID, one of `ae_trn`, `au_abn`, `au_arn`, `br_cnpj`, `br_cpf`, `ca_bn`, `ca_gst_hst`, `ca_pst_bc`, `ca_pst_mb`, `ca_pst_sk`, `ca_qst`, `ch_vat`, `cl_tin`, `es_cif`, `eu_vat`, `gb_vat`, `hk_br`, `id_npwp`, `il_vat`, `in_gst`, `jp_cn`, `jp_rn`, `kr_brn`, `li_uid`, `mx_rfc`, `my_frp`, `my_itn`, `my_sst`, `no_vat`, `nz_gst`, `ru_inn`, `ru_kpp`, `sa_vat`, `sg_gst`, `sg_uen`, `th_vat`, `tw_vat`, `us_ein`, or `za_vat`.
     ///
     /// Note that some legacy tax IDs have type `unknown`.
     #[serde(rename = "type")]
@@ -46,6 +46,7 @@ pub struct TaxId {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
 
+    /// Tax ID verification information.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verification: Option<TaxIdVerification>,
 }
@@ -78,25 +79,39 @@ pub struct TaxIdVerification {
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum TaxIdType {
+    AeTrn,
     AuAbn,
+    AuArn,
     BrCnpj,
     BrCpf,
     CaBn,
+    CaGstHst,
+    CaPstBc,
+    CaPstMb,
+    CaPstSk,
     CaQst,
     ChVat,
+    ClTin,
     EsCif,
     EuVat,
+    GbVat,
     HkBr,
+    IdNpwp,
+    IlVat,
     InGst,
     JpCn,
+    JpRn,
     KrBrn,
     LiUid,
     MxRfc,
+    MyFrp,
     MyItn,
     MySst,
     NoVat,
     NzGst,
     RuInn,
+    RuKpp,
+    SaVat,
     SgGst,
     SgUen,
     ThVat,
@@ -109,25 +124,39 @@ pub enum TaxIdType {
 impl TaxIdType {
     pub fn as_str(self) -> &'static str {
         match self {
+            TaxIdType::AeTrn => "ae_trn",
             TaxIdType::AuAbn => "au_abn",
+            TaxIdType::AuArn => "au_arn",
             TaxIdType::BrCnpj => "br_cnpj",
             TaxIdType::BrCpf => "br_cpf",
             TaxIdType::CaBn => "ca_bn",
+            TaxIdType::CaGstHst => "ca_gst_hst",
+            TaxIdType::CaPstBc => "ca_pst_bc",
+            TaxIdType::CaPstMb => "ca_pst_mb",
+            TaxIdType::CaPstSk => "ca_pst_sk",
             TaxIdType::CaQst => "ca_qst",
             TaxIdType::ChVat => "ch_vat",
+            TaxIdType::ClTin => "cl_tin",
             TaxIdType::EsCif => "es_cif",
             TaxIdType::EuVat => "eu_vat",
+            TaxIdType::GbVat => "gb_vat",
             TaxIdType::HkBr => "hk_br",
+            TaxIdType::IdNpwp => "id_npwp",
+            TaxIdType::IlVat => "il_vat",
             TaxIdType::InGst => "in_gst",
             TaxIdType::JpCn => "jp_cn",
+            TaxIdType::JpRn => "jp_rn",
             TaxIdType::KrBrn => "kr_brn",
             TaxIdType::LiUid => "li_uid",
             TaxIdType::MxRfc => "mx_rfc",
+            TaxIdType::MyFrp => "my_frp",
             TaxIdType::MyItn => "my_itn",
             TaxIdType::MySst => "my_sst",
             TaxIdType::NoVat => "no_vat",
             TaxIdType::NzGst => "nz_gst",
             TaxIdType::RuInn => "ru_inn",
+            TaxIdType::RuKpp => "ru_kpp",
+            TaxIdType::SaVat => "sa_vat",
             TaxIdType::SgGst => "sg_gst",
             TaxIdType::SgUen => "sg_uen",
             TaxIdType::ThVat => "th_vat",
