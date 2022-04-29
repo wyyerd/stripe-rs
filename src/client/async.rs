@@ -205,6 +205,12 @@ impl Client {
                 HeaderValue::from_str(account).unwrap(),
             );
         }
+        if let Some(key) = &self.headers.idempotency_key {
+            headers.insert(
+                HeaderName::from_static("idempotency-key"),
+                HeaderValue::from_str(key).unwrap(),
+            );
+        }
         if let Some(client_id) = &self.headers.client_id {
             headers.insert(
                 HeaderName::from_static("client-id"),
