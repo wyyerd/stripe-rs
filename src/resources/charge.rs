@@ -8,7 +8,7 @@ use crate::params::{Expand, Expandable, List, Metadata, Object, RangeQuery, Time
 use crate::resources::{
     Account, Application, ApplicationFee, BalanceTransaction, BillingDetails, ChargeSourceParams,
     Currency, Customer, FraudDetailsReport, Invoice, Order, PaymentIntent, PaymentMethodDetails,
-    Refund, Review, Shipping, Transfer,
+    PaymentSource, Refund, Review, Shipping, Transfer,
 };
 use serde_derive::{Deserialize, Serialize};
 
@@ -171,6 +171,9 @@ pub struct Charge {
     /// Shipping information for the charge.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub shipping: Option<Shipping>,
+
+    /// Source information for the charge.
+    pub source: Option<PaymentSource>,
 
     /// The transfer ID which created this charge.
     ///
