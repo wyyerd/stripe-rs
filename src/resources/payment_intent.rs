@@ -379,6 +379,12 @@ pub struct TransferData {
     pub destination: Expandable<Account>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AutomaticPaymentMethods {
+    /// When enabled, this PaymentIntent will accept payment methods that you have enabled in the Dashboard and are compatible with this PaymentIntent’s other parameters.
+    pub enabled: bool
+}
+
 /// The set of parameters that can be used when creating a payment_intent object.
 ///
 /// For more details see [https://stripe.com/docs/api/payment_intents/create](https://stripe.com/docs/api/payment_intents/create)
@@ -395,6 +401,9 @@ pub struct CreatePaymentIntent<'a> {
     pub application_fee_amount: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capture_method: Option<PaymentIntentCaptureMethod>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub automatic_payment_methods: Option<AutomaticPaymentMethods>,
 
     /// Attempt to confirm this PaymentIntent on source attachment.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -433,6 +442,7 @@ impl<'a> CreatePaymentIntent<'a> {
             amount,
             currency,
             payment_method: Default::default(),
+            automatic_payment_methods: Default::default(),
             confirmation_method: Default::default(),
             application_fee_amount: Default::default(),
             capture_method: Default::default(),
