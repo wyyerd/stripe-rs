@@ -225,6 +225,7 @@ pub enum EventObject {
     Card(Card),
     Charge(Charge),
     Customer(Customer),
+    Discount(Discount),
     Dispute(Dispute),
     #[serde(rename = "checkout.session")]
     CheckoutSession(CheckoutSession),
