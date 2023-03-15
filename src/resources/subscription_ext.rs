@@ -3,18 +3,6 @@ use crate::ids::SubscriptionId;
 use crate::resources::{CreateSubscriptionItems, Subscription};
 use serde_derive::Serialize;
 
-#[derive(Clone, Debug, Default, Serialize)]
-pub struct CancelSubscription {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub at_period_end: Option<bool>,
-}
-
-impl CancelSubscription {
-    pub fn new() -> CancelSubscription {
-        CancelSubscription { at_period_end: None }
-    }
-}
-
 impl Subscription {
     /// Cancels a subscription.
     ///
@@ -22,9 +10,8 @@ impl Subscription {
     pub fn cancel(
         client: &Client,
         subscription_id: &SubscriptionId,
-        params: CancelSubscription,
     ) -> Response<Subscription> {
-        client.delete_query(&format!("/subscriptions/{}", subscription_id), params)
+        client.delete(&format!("/subscriptions/{}", subscription_id))
     }
 }
 
